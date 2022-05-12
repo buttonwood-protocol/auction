@@ -1,0 +1,19 @@
+{
+  "name": "@buttonwood/auction",
+  "version": "0.0.1",
+  "description": "Dual sided auction for ERC20 tokens",
+  "files": [
+    "src/**/*.sol"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/buttonwood-protocol/auction.git"
+  },
+  "devDependencies": {
+    "prettier": "^2.3.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.13"
+  },
+  "scripts": {
+    "lint": "prettier --write src/*.sol && prettier --write src/**/*.sol"
+  }
+}

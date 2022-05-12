@@ -1,0 +1,102 @@
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.10;
+
+import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
+import {ERC20} from "solmate/tokens/ERC20.sol";
+import {ERC1155SupplyUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
+import {Initializable} from "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
+import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import {Clone} from "clones-with-immutable-args/Clone.sol";
+
+interface IDualAuction {
+    /// @notice Zero address given for asset.
+    error InvalidAsset();
+
+    /// @notice Invalid amount of asset given
+    error InvalidAmount();
+
+    /// @notice Price out of bounds
+    error InvalidPrice();
+
+    /// @notice The end date has not yet passed
+    error AuctionActive();
+
+    /// @notice The end date has passed
+    error AuctionEnded();
+
+    /// @notice The auction has not been settled
+    error AuctionNotSettled();
+
+    /// @notice The auction has already been settled
+    error AuctionSettled();
+
+    /// @notice The auction ended with no clearing price
+    error NoClearingPrice();
+
+    /// @notice The settlement somehow ended with cleared tokens but no clearing price
+    error SettleFailed();
+
+    /// @notice Event declaring that a bid was made
+    event Bid(
+        address actor,
+        uint256 amountIn,
+        uint256 amountOut,
+        uint256 price
+    );
+
+    /// @notice Event declaring that an ask was made
+    event Ask(
+        address actor,
+        uint256 amountIn,
+        uint256 amountOut,
+        uint256 price
+    );
+
+    /// @notice The highest bid received so far
+    function maxBid() external view returns (uint256);
+
+    /// @notice The lowest ask received so far
+    function minAsk() external view returns (uint256);
+
+    /// @notice The clearing price of the auction, set after settlement
+    function clearingPrice() external view returns (uint256);
+
+    /// @notice True if the auction has been settled, eles false
+    function settled() external view returns (bool);
+
+    /**
+     * @notice Places a bid using amountIn bidAsset tokens,
+     * for askAsset tokens at the given price
+     * @param amountIn The amount to bid, in bidAsset
+     * @param price the price at which to bid, denominated in terms of bidAsset per askAsset
+     * @return The number of shares output
+     */
+    function bid(uint256 amountIn, uint256 price) external returns (uint256);
+
+    /**
+     * @notice Places an ask using amountIn askAsset tokens,
+     * for bidAsset tokens at the given price
+     * @param amountIn The amount to sell, in askAsset
+     * @param price the price at which to ask, denominated in terms of bidAsset per askAsset
+     * @return The number of shares output
+     */
+    function ask(uint256 amountIn, uint256 price) external returns (uint256);
+
+    /**
+     * @notice Settles the auction after the end date
+     * @dev iterates through the bids and asks to determine
+     *  The clearing price, setting the clearingPrice variable afterwards
+     * @return The settled clearing price, or 0 if none
+     */
+    function settle() external returns (uint256);
+
+    /**
+     * @notice Redeems bid/ask slips after the auction has concluded
+     * @param tokenId The id of the bid/ask slip to redeem
+     * @param amount The amount of slips to redeem
+     * @return The number of tokens received
+     */
+    function redeem(uint256 tokenId, uint256 amount)
+        external
+        returns (uint256, uint256);
+}
