@@ -41,13 +41,10 @@ contract DualAuction is
     /// @notice The clearing ask price of the auction, set after settlement
     uint256 public clearingAskPrice;
 
-    /// @notice The number of bid tokens cleared at the clearing price
-    /// @dev needed to help calculate partial tick clears
-    uint256 public bidTokensCleared;
-
-    /// @notice The number of ask tokens cleared at the clearing price
-    /// @dev needed to help calculate partial tick clears
-    uint256 public askTokensCleared;
+    uint256 public bidFringeMissing;
+    uint256 public askFringeMissing;
+    uint256 public bidFringeCleared;
+    uint256 public askFringeCleared;
 
     /// @notice True if the auction has been settled, else false
     bool public settled;
@@ -126,10 +123,11 @@ contract DualAuction is
             address(this),
             amountIn
         );
-        console2.log(0, amountIn, price);
-        _mint(msg.sender, price, amountIn, "");
-        emit Bid(msg.sender, amountIn, amountIn, price);
-        return amountIn;
+        console2.log("bid", amountIn, price);
+        uint256 amountOut = bidToAsk(amountIn, price);
+        _mint(msg.sender, price, amountOut, "");
+        emit Bid(msg.sender, amountIn, amountOut, price);
+        return amountOut;
     }
 
     /**
@@ -150,7 +148,7 @@ contract DualAuction is
             address(this),
             amountIn
         );
-        console2.log(1, amountIn, price);
+        console2.log("ask", amountIn, price);
         _mint(msg.sender, toAskTokenId(price), amountIn, "");
         emit Ask(msg.sender, amountIn, amountIn, price);
         return amountIn;
@@ -171,10 +169,7 @@ contract DualAuction is
         if (currentBid < currentAsk) return 0;
 
         uint256 currentAskTokens = totalSupply(toAskTokenId(currentAsk));
-        uint256 currentDesiredAskTokens = bidToAsk(
-            totalSupply(currentBid),
-            currentBid
-        );
+        uint256 currentDesiredAskTokens = totalSupply(currentBid);
         uint256 lastBidClear;
         uint256 lastAskClear;
 
@@ -183,6 +178,11 @@ contract DualAuction is
             currentBid >= minPrice() &&
             currentAsk <= maxPrice()
         ) {
+            console2.log(
+                "loop (ask, bid)",
+                currentAskTokens,
+                currentDesiredAskTokens
+            );
             uint256 cleared = min(currentAskTokens, currentDesiredAskTokens);
             currentAskTokens -= cleared;
             currentDesiredAskTokens -= cleared;
@@ -190,22 +190,31 @@ contract DualAuction is
             if (cleared > 0) {
                 lastAskClear += cleared;
                 lastBidClear += cleared;
-                console2.log("setting last clear", lastBidClear, lastAskClear, cleared);
+                console2.log(
+                    "setting last clear",
+                    lastBidClear,
+                    lastAskClear,
+                    cleared
+                );
             }
 
             if (currentAskTokens == 0) {
                 currentAsk += tickWidth();
                 currentAskTokens = totalSupply(toAskTokenId(currentAsk));
-                if (currentAskTokens > 0) highAsk = currentAsk;
+                if (currentAskTokens > 0) {
+                    highAsk = currentAsk;
+                    lastAskClear = 0;
+                }
             }
 
             if (currentDesiredAskTokens == 0) {
                 currentBid -= tickWidth();
-                currentDesiredAskTokens = bidToAsk(
-                    totalSupply(currentBid),
-                    currentBid
-                );
-                if (currentDesiredAskTokens > 0) lowBid = currentBid;
+                currentDesiredAskTokens = totalSupply(currentBid);
+
+                if (currentDesiredAskTokens > 0) {
+                    lowBid = currentBid;
+                    lastBidClear = 0;
+                }
             }
         }
 
@@ -214,9 +223,28 @@ contract DualAuction is
         clearingAskPrice = highAsk;
         uint256 _clearingPrice = clearingPrice();
         console2.log("clearing price", _clearingPrice);
-        askTokensCleared = lastAskClear;
-        bidTokensCleared = askToBid(lastBidClear, _clearingPrice);
-        console2.log("cleared ask, bid", askTokensCleared, lastBidClear, bidTokensCleared);
+        // askTokensCleared = lastAskClear;
+        // bidTokensCleared = askToBid(lastBidClear, _clearingPrice);
+        console2.log(
+            "ask fringe",
+            totalSupply(toAskTokenId(highAsk)),
+            lastAskClear
+        );
+        console2.log("bid fringe", totalSupply(lowBid), lastBidClear);
+        askFringeMissing = totalSupply(toAskTokenId(highAsk)) - lastAskClear;
+        bidFringeMissing = totalSupply(lowBid) - lastBidClear;
+        askFringeCleared = lastAskClear;
+        bidFringeCleared = lastBidClear;
+        console2.log(
+            "ask bid fringe refund",
+            askFringeMissing,
+            bidFringeMissing
+        );
+        console2.log(
+            "ask bid fringe cleared",
+            askFringeCleared,
+            bidFringeCleared
+        );
 
         return _clearingPrice;
     }
@@ -232,27 +260,39 @@ contract DualAuction is
     {
         if (amount == 0) revert InvalidAmount();
         uint256 price = toPrice(tokenId);
+        console2.log("redeeming", price, amount, tokenId);
         (bidTokens, askTokens) = shareValue(amount, tokenId);
+        console2.log("share value (bid, ask)", bidTokens, askTokens);
 
         if (toBidTokenId(tokenId) == tokenId && price == clearingBidPrice) {
             console2.log("Decreasing ask tokens");
-            askTokensCleared -= askTokens;
-        } else if (toAskTokenId(tokenId) == tokenId && price == clearingAskPrice) {
+        } else if (
+            toAskTokenId(tokenId) == tokenId && price == clearingAskPrice
+        ) {
             console2.log("Decreasing bid tokens");
-            bidTokensCleared -= bidTokens;
         }
 
         _burn(msg.sender, tokenId, amount);
 
         if (bidTokens > 0) {
-            console2.log("bid redeem", bidAsset().balanceOf(address(this)), bidTokens, price);
-            console2.log(clearingBidPrice, bidTokensCleared, clearingAskPrice, askTokensCleared);
+            console2.log("BID REDEEM", price);
+            console2.log(
+                "bid redeem (balance, wanted, getting)",
+                bidAsset().balanceOf(address(this)),
+                amount,
+                bidTokens
+            );
             SafeTransferLib.safeTransfer(bidAsset(), msg.sender, bidTokens);
         }
 
         if (askTokens > 0) {
-            console2.log("ask redeem", askAsset().balanceOf(address(this)), askTokens, price);
-            console2.log(clearingBidPrice, bidTokensCleared, clearingAskPrice, askTokensCleared);
+            console2.log("ASK REDEEM", price);
+            console2.log(
+                "ask redeem (balance, wanted, getting)",
+                askAsset().balanceOf(address(this)),
+                amount,
+                askTokens
+            );
             SafeTransferLib.safeTransfer(askAsset(), msg.sender, askTokens);
         }
     }
@@ -289,38 +329,56 @@ contract DualAuction is
             uint256 _clearingBid = clearingBidPrice;
             // not cleared at all
             if (_clearingPrice == 0 || price < _clearingBid)
-                return (shareAmount, 0);
+                return (askToBid(shareAmount, price), 0);
 
-            uint256 cleared = price > _clearingBid
-                ? bidToAsk(shareAmount, _clearingPrice) // fully cleared
-                : (shareAmount * askTokensCleared) / totalSupply(price); // partial clear
-
-            // extra conversions for numerical stability
-            // otherwise floor rounding errors in cleared tokens in extra uncleared
-            uint256 notCleared = askToBid(
-                bidToAsk(shareAmount, _clearingPrice) - cleared,
-                _clearingPrice
-            );
-            console2.log("bid cleared", cleared, notCleared, notCleared + askToBid(cleared, price));
-            return (notCleared, cleared);
+            // fully cleared
+            if (price > _clearingBid) {
+                uint256 cleared = shareAmount;
+                // extra conversions for numerical stability
+                // otherwise floor rounding errors in cleared tokens in extra uncleared
+                uint256 bidInput = askToBid(shareAmount, price);
+                uint256 notCleared = bidInput -
+                    askToBid(cleared, _clearingPrice);
+                return (notCleared, cleared);
+                // partially cleared
+            } else {
+                console2.log(shareAmount, bidFringeCleared, totalSupply(price));
+                uint256 cleared = (shareAmount * bidFringeCleared) /
+                    totalSupply(price);
+                console2.log(cleared);
+                uint256 bidInput = askToBid(shareAmount, price);
+                uint256 notCleared = bidInput -
+                    askToBid(cleared, _clearingPrice);
+                return (notCleared, cleared);
+            }
         } else {
             uint256 _clearingAsk = clearingAskPrice;
             // not cleared at all
             if (_clearingPrice == 0 || price > _clearingAsk)
                 return (0, shareAmount);
 
-            uint256 cleared = price < _clearingAsk
-                ? askToBid(shareAmount, _clearingPrice) // fully cleared
-                : (shareAmount * bidTokensCleared) / // partial clear
-                    totalSupply(toAskTokenId(price));
+            if (price < _clearingAsk) {
+                uint256 cleared = askToBid(shareAmount, _clearingPrice);
+                // extra conversions for numerical stability
+                // otherwise floor rounding errors in cleared tokens in extra uncleared
+                console2.log(cleared);
+                console2.log(shareAmount);
+                console2.log(price);
+                console2.log(bidToAsk(cleared, price));
 
-            // extra conversions for numerical stability
-            // otherwise floor rounding errors in cleared tokens in extra uncleared
-            uint256 notCleared = bidToAsk(
-                askToBid(shareAmount, _clearingPrice) - cleared,
-                _clearingPrice
-            );
-            return (cleared, notCleared);
+                uint256 notCleared = roundingError(shareAmount, _clearingPrice) -
+                    bidToAsk(cleared, _clearingPrice);
+                return (cleared, notCleared);
+            } else {
+                uint256 cleared = askToBid(
+                    (shareAmount * askFringeCleared) /
+                        totalSupply(toAskTokenId(price)),
+                    _clearingPrice
+                );
+                uint256 clearedAskValue = bidToAsk(cleared, _clearingPrice);
+                uint256 notCleared = roundingError(shareAmount, _clearingPrice) - clearedAskValue;
+                return (cleared, notCleared);
+            }
         }
     }
 
@@ -330,5 +388,9 @@ contract DualAuction is
 
     function min(uint256 a, uint256 b) internal pure returns (uint256) {
         return a < b ? a : b;
+    }
+
+    function roundingError(uint256 a, uint256 price) internal view returns (uint256) {
+        return bidToAsk(askToBid(a, price), price);
     }
 }
