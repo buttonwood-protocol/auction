@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.10;
 
-import "forge-std/console2.sol";
 import {DSTestPlus} from "solmate/test/utils/DSTestPlus.sol";
 import {MockERC20} from "./mock/MockERC20.sol";
 import {AuctionUser} from "./mock/users/AuctionUser.sol";
@@ -525,6 +524,8 @@ contract DualAuctionTest is DSTestPlus {
         assertEq(bidReceived, 10**18);
         assertEq(askReceived, 0);
         assertEq(bidAsset.balanceOf(address(user)), amount);
+        assertEq(bidAsset.balanceOf(address(auction)), 0);
+        assertEq(askAsset.balanceOf(address(auction)), 0);
     }
 
     function testRedeemDifferentPrices() public {
@@ -637,6 +638,8 @@ contract DualAuctionTest is DSTestPlus {
         assertEq(askReceived, 0);
         assertEq(askAsset.balanceOf(address(user)), 0);
         assertEq(bidAsset.balanceOf(address(user)), amount);
+        assertEq(bidAsset.balanceOf(address(auction)), 0);
+        assertEq(askAsset.balanceOf(address(auction)), 0);
     }
 
     function testRedeemAskNotCleared() public {
@@ -656,6 +659,8 @@ contract DualAuctionTest is DSTestPlus {
         assertEq(askReceived, amount);
         assertEq(askAsset.balanceOf(address(user)), amount);
         assertEq(bidAsset.balanceOf(address(user)), 0);
+        assertEq(bidAsset.balanceOf(address(auction)), 0);
+        assertEq(askAsset.balanceOf(address(auction)), 0);
     }
 
     function testFailRedeemZero() public {
@@ -813,28 +818,16 @@ contract DualAuctionTest is DSTestPlus {
         }
         hevm.warp(initialTimestamp + 2 days);
         auction.settle();
-        console2.log(auction.clearingPrice());
 
         for (uint256 i = 0; i < count; i++) {
             uint256 tokenId = tokenIds[i];
             uint256 amount = amounts[i];
-            (uint256 bid, uint256 ask) = user.redeem(tokenId, amount);
-
-            // assert that the total output value
-            // is equivalent ot the input value
-            // should be true whether or not cleared
-            if (auction.toBidTokenId(tokenId) == tokenId) {
-                uint256 totalBidOutput = bid +
-                    auction.askToBid(ask, auction.clearingPrice());
-                // some floor rounding is bound to happen
-                // assertEqThreshold(totalBidOutput, amount, 5);
-            } else {
-                uint256 totalAskOutput = ask +
-                    auction.bidToAsk(bid, auction.clearingPrice());
-                // some floor rounding is bound to happen
-                // assertEqThreshold(totalAskOutput, amount, 5);
-            }
+            user.redeem(tokenId, amount);
         }
+
+        // some floor rounding is bound to happen
+        assertEqThreshold(bidAsset.balanceOf(address(auction)), 0, 5);
+        assertEqThreshold(askAsset.balanceOf(address(auction)), 0, 5);
     }
 
     function coercePrice(uint256 price) internal view returns (uint256) {
