@@ -52,6 +52,18 @@ interface IDualAuction {
         uint256 price
     );
 
+    /// @notice Event notifying about the settlement of an auction
+    event Settle(address actor, uint256 clearingPrice);
+
+    /// @notice Event notifying about the redemption of share tokens
+    event Redeem(
+        address actor,
+        uint256 tokenId,
+        uint256 shareAmount,
+        uint256 bidValue,
+        uint256 askValue
+    );
+
     /// @notice The highest bid received so far
     function maxBid() external view returns (uint256);
 

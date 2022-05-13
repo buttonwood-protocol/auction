@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.10;
 
+import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
 import {ERC20} from "solmate/tokens/ERC20.sol";
 import {AuctionImmutableArgs} from "./AuctionImmutableArgs.sol";
 
@@ -46,7 +47,12 @@ contract AuctionConversions is AuctionImmutableArgs {
         pure
         returns (uint256)
     {
-        return (askTokens * price) / (10**bidAssetDecimals());
+        return
+            FixedPointMathLib.mulDivDown(
+                askTokens,
+                price,
+                10**bidAssetDecimals()
+            );
     }
 
     /**
@@ -61,6 +67,31 @@ contract AuctionConversions is AuctionImmutableArgs {
         returns (uint256)
     {
         if (price == 0) return 0;
-        return (bidTokens * (10**bidAssetDecimals())) / price;
+        return
+            FixedPointMathLib.mulDivDown(
+                bidTokens,
+                10**bidAssetDecimals(),
+                price
+            );
+    }
+
+    /**
+     * @notice determine the max of two numbers
+     * @param a the first number
+     * @param a the second number
+     * @return the maximum of the two numbers
+     */
+    function max(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a > b ? a : b;
+    }
+
+    /**
+     * @notice determine the min of two numbers
+     * @param a the first number
+     * @param a the second number
+     * @return the minimum of the two numbers
+     */
+    function min(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a < b ? a : b;
     }
 }

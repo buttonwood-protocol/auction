@@ -160,10 +160,7 @@ contract DualAuctionTest is DSTestPlus {
         user.approve(address(bidAsset), amount);
         user.bid(amount, price);
 
-        assertEq(
-            auction.balanceOf(address(user), price),
-            auction.bidToAsk(amount, price)
-        );
+        assertEq(auction.balanceOf(address(user), price), amount);
         assertEq(bidAsset.balanceOf(address(user)), 0);
         assertEq(bidAsset.balanceOf(address(auction)), amount);
     }
@@ -725,6 +722,55 @@ contract DualAuctionTest is DSTestPlus {
     }
 
     // found during fuzzing of random bids and asks
+    function testDoubleBidCounterexample() public {
+        uint256 amount = 10**18;
+        AuctionUser bidder = new AuctionUser(address(auction));
+        bidAsset.mint(address(bidder), amount);
+        bidder.approve(address(bidAsset), amount);
+        uint256 bidderShares = bidder.bid(amount, 10**16 * 60);
+
+        AuctionUser otherBidder = new AuctionUser(address(auction));
+        bidAsset.mint(address(otherBidder), amount);
+        otherBidder.approve(address(bidAsset), amount);
+        uint256 otherBidderShares = otherBidder.bid(amount, 10**16 * 60);
+
+        AuctionUser asker = new AuctionUser(address(auction));
+        askAsset.mint(address(asker), amount);
+        asker.approve(address(askAsset), amount);
+        uint256 askerShares = asker.ask(amount, 10**16 * 40);
+
+        hevm.warp(initialTimestamp + 2 days);
+        auction.settle();
+        assertEq(auction.clearingPrice(), 10**16 * 50);
+
+        (uint256 bidReceived, uint256 askReceived) = bidder.redeem(
+            auction.toBidTokenId(10**16 * 60),
+            bidderShares
+        );
+        assertEq(bidReceived, 10**16 * 75);
+        assertEq(askReceived, 10**16 * 50);
+
+        (bidReceived, askReceived) = asker.redeem(
+            auction.toAskTokenId(10**16 * 40),
+            askerShares
+        );
+
+        assertEq(bidReceived, 10**16 * 50);
+        assertEq(askReceived, 0);
+
+        (bidReceived, askReceived) = otherBidder.redeem(
+            auction.toBidTokenId(10**16 * 60),
+            otherBidderShares
+        );
+        // fully cleared at 0.50
+        assertEq(bidReceived, 10**16 * 75);
+        assertEq(askReceived, 10**16 * 50);
+
+        assertEq(askAsset.balanceOf(address(auction)), 0);
+        assertEq(bidAsset.balanceOf(address(auction)), 0);
+    }
+
+    // found during fuzzing of random bids and asks
     function testOversubscriptionCounterexample() public {
         uint256 amount = 10**18;
         AuctionUser bidder = new AuctionUser(address(auction));
@@ -787,7 +833,6 @@ contract DualAuctionTest is DSTestPlus {
     }
 
     function testRandomBidsAsks(uint128 seed, uint8 count) public {
-        seed = 1723800819;
         count = 4;
         uint256[] memory tokenIds = new uint256[](count);
         uint256[] memory amounts = new uint256[](count);
@@ -796,7 +841,7 @@ contract DualAuctionTest is DSTestPlus {
             if (seed + i == type(uint128).max) seed = 0;
             uint256 runSeed = uint256(keccak256(abi.encode(seed + i)));
             uint256 amount = uint256(keccak256(abi.encode(runSeed)));
-            if (amount > 2**126 - 1) amount = amount % 2**126 - 1;
+            if (amount > 2**126 - 1) amount = (amount % 2**126) - 1;
             uint256 price = coercePrice(
                 uint256(keccak256(abi.encode(runSeed + 1)))
             );
@@ -826,8 +871,8 @@ contract DualAuctionTest is DSTestPlus {
         }
 
         // some floor rounding is bound to happen
-        assertEqThreshold(bidAsset.balanceOf(address(auction)), 0, 5);
-        assertEqThreshold(askAsset.balanceOf(address(auction)), 0, 5);
+        assertEqThreshold(bidAsset.balanceOf(address(auction)), 0, 20);
+        assertEqThreshold(askAsset.balanceOf(address(auction)), 0, 20);
     }
 
     function coercePrice(uint256 price) internal view returns (uint256) {
