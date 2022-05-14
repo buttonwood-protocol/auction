@@ -48,7 +48,6 @@ contract DualAuctionFactory is IAuctionFactory {
         DualAuction clone = DualAuction(implementation.clone(data));
 
         clone.initialize();
-        clone.transferOwnership(msg.sender);
 
         emit AuctionCreated(bidAsset, askAsset, endDate, msg.sender);
         return address(clone);

@@ -6,7 +6,6 @@ import {ERC20} from "solmate/tokens/ERC20.sol";
 import {ReentrancyGuardUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import {ERC1155SupplyUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
 import {Initializable} from "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
-import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import {Clone} from "clones-with-immutable-args/Clone.sol";
 import {IDualAuction} from "./interfaces/IDualAuction.sol";
 import {AuctionImmutableArgs} from "./utils/AuctionImmutableArgs.sol";
@@ -17,7 +16,6 @@ import {AuctionConversions} from "./utils/AuctionConversions.sol";
  */
 contract DualAuction is
     ERC1155SupplyUpgradeable,
-    OwnableUpgradeable,
     Clone,
     ReentrancyGuardUpgradeable,
     AuctionImmutableArgs,
@@ -88,7 +86,6 @@ contract DualAuction is
      * @notice Initializes the auction, should be called by DualAuctionFactory
      */
     function initialize() external initializer {
-        __Ownable_init();
         __ERC1155_init("");
         __ERC1155Supply_init();
         __ReentrancyGuard_init();
@@ -310,9 +307,7 @@ contract DualAuction is
                 return (0, shareAmount);
 
             if (price < _clearingAsk) {
-                uint256 cleared = askToBid(shareAmount, _clearingPrice);
-
-                return (cleared, 0);
+                return (askToBid(shareAmount, _clearingPrice), 0);
             } else {
                 uint256 cleared = (shareAmount * bidTokensClearedAtClearing) /
                     totalSupply(toAskTokenId(price));
