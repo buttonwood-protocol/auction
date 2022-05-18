@@ -398,6 +398,30 @@ contract DualAuctionTest is DSTestPlus {
         assertEq(auction.clearingPrice(), 10**18);
     }
 
+    function testSettleBidAskSamePriceWithExtraBid() public {
+        uint256 amount = 10**18;
+        uint256 price = 10**18;
+
+        askAsset.mint(address(user), amount);
+        user.approve(address(askAsset), amount);
+        user.ask(amount, price);
+
+        bidAsset.mint(address(user), amount);
+        user.approve(address(bidAsset), amount);
+        user.bid(amount, price);
+
+        bidAsset.mint(address(user), amount);
+        user.approve(address(bidAsset), amount);
+        user.bid(amount, price - auction.tickWidth());
+
+        hevm.warp(initialTimestamp + 2 days);
+        auction.settle();
+        assertTrue(auction.settled());
+        assertEq(auction.clearingPrice(), 10**18);
+        assertEq(auction.clearingBidPrice(), 10**18);
+        assertEq(auction.clearingAskPrice(), 10**18);
+    }
+
     function testSettleBidAskOverlap(uint128 amount) public {
         if (amount == 0) amount = 1;
 
@@ -595,7 +619,6 @@ contract DualAuctionTest is DSTestPlus {
             auction.toBidTokenId(10**16 * 60),
             highBidderShares
         );
-        // fully cleared at 0.50
         assertEqThreshold(bidReceived, amount / 2, 2);
         assertEq(askReceived, amount);
 
@@ -832,8 +855,9 @@ contract DualAuctionTest is DSTestPlus {
         assertEq(bidAsset.balanceOf(address(auction)), 0);
     }
 
-    function testRandomBidsAsks(uint128 seed, uint8 count) public {
-        count = 4;
+    function testRandomBidsAsks(uint128 seed) public {
+        // note: can parameterize count or change it, but runs very slow at high values
+        uint8 count = 4;
         uint256[] memory tokenIds = new uint256[](count);
         uint256[] memory amounts = new uint256[](count);
 

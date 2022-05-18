@@ -153,20 +153,18 @@ contract DualAuction is
      */
     function settle() external onlyAuctionEnded returns (uint256) {
         if (settled) revert AuctionSettled();
+        settled = true;
+
         uint256 currentBid = maxBid;
         uint256 currentAsk = minAsk;
-        uint256 lowBid = currentBid;
-        uint256 highAsk = currentAsk;
 
-        settled = true;
         // no overlap, nothing will be cleared
         if (currentBid < currentAsk) return 0;
 
-        uint256 currentAskTokens = totalSupply(toAskTokenId(currentAsk));
-        uint256 currentDesiredAskTokens = bidToAsk(
-            totalSupply(currentBid),
-            currentBid
-        );
+        uint256 lowBid = currentBid;
+        uint256 highAsk = currentAsk;
+        uint256 currentAskTokens;
+        uint256 currentDesiredAskTokens;
         uint256 lastBidClear;
         uint256 lastAskClear;
 
@@ -175,36 +173,33 @@ contract DualAuction is
             currentBid >= minPrice() &&
             currentAsk <= maxPrice()
         ) {
-            uint256 cleared = min(currentAskTokens, currentDesiredAskTokens);
-            currentAskTokens -= cleared;
-            currentDesiredAskTokens -= cleared;
-
-            if (cleared > 0) {
-                lastAskClear += cleared;
-                lastBidClear += cleared;
-            }
-
             if (currentAskTokens == 0) {
-                currentAsk += tickWidth();
                 currentAskTokens = totalSupply(toAskTokenId(currentAsk));
-                if (currentAskTokens > 0) {
-                    highAsk = currentAsk;
-                    lastBidClear = 0;
-                }
+                if (currentAskTokens > 0) lastBidClear = 0;
             }
 
             if (currentDesiredAskTokens == 0) {
-                currentBid -= tickWidth();
                 currentDesiredAskTokens = bidToAsk(
                     totalSupply(currentBid),
                     currentBid
                 );
 
-                if (currentDesiredAskTokens > 0) {
-                    lowBid = currentBid;
-                    lastAskClear = 0;
-                }
+                if (currentDesiredAskTokens > 0) lastAskClear = 0;
             }
+
+            uint256 cleared = min(currentAskTokens, currentDesiredAskTokens);
+
+            if (cleared > 0) {
+                currentAskTokens -= cleared;
+                currentDesiredAskTokens -= cleared;
+                lastBidClear += cleared;
+                lastAskClear += cleared;
+                highAsk = currentAsk;
+                lowBid = currentBid;
+            }
+
+            if (currentAskTokens == 0) currentAsk += tickWidth();
+            if (currentDesiredAskTokens == 0) currentBid -= tickWidth();
         }
 
         clearingBidPrice = lowBid;
@@ -279,36 +274,35 @@ contract DualAuction is
 
         if (toBidTokenId(tokenId) == tokenId) {
             uint256 _clearingBid = clearingBidPrice;
-            // not cleared at all
-            if (_clearingPrice == 0 || price < _clearingBid)
+            if (_clearingPrice == 0 || price < _clearingBid) {
+                // not cleared at all
                 return (shareAmount, 0);
-
-            // fully cleared
-            if (price > _clearingBid) {
-                // original # of bonds wanted
+            } else if (price > _clearingBid) {
+                // fully cleared
                 uint256 cleared = bidToAsk(shareAmount, price);
-                uint256 bidInput = shareAmount;
-                uint256 notCleared = bidInput -
-                    askToBid(cleared, _clearingPrice);
-                return (notCleared, cleared);
-                // partially cleared
+                return (
+                    shareAmount - askToBid(cleared, _clearingPrice),
+                    cleared
+                );
             } else {
+                // partially cleared
                 uint256 cleared = (shareAmount * askTokensClearedAtClearing) /
                     totalSupply(price);
-                uint256 bidInput = shareAmount;
-                uint256 notCleared = bidInput -
-                    askToBid(cleared, _clearingPrice);
-                return (notCleared, cleared);
+                return (
+                    shareAmount - askToBid(cleared, _clearingPrice),
+                    cleared
+                );
             }
         } else {
             uint256 _clearingAsk = clearingAskPrice;
-            // not cleared at all
-            if (_clearingPrice == 0 || price > _clearingAsk)
+            if (_clearingPrice == 0 || price > _clearingAsk) {
+                // not cleared at all
                 return (0, shareAmount);
-
-            if (price < _clearingAsk) {
+            } else if (price < _clearingAsk) {
+                // fully cleared, all ask tokens match at clearing price
                 return (askToBid(shareAmount, _clearingPrice), 0);
             } else {
+                // partially cleared
                 uint256 cleared = (shareAmount * bidTokensClearedAtClearing) /
                     totalSupply(toAskTokenId(price));
                 uint256 askValue = askToBid(shareAmount, _clearingPrice);
