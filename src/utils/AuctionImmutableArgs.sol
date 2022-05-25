@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
+
 pragma solidity 0.8.10;
 
 import {ERC20} from "solmate/tokens/ERC20.sol";
 import {Clone} from "clones-with-immutable-args/Clone.sol";
+import {IAuctionFeeManager} from "../interfaces/IAuctionFeeManager.sol";
 
 /**
  * @notice Defines the immutable arguments for a dual auction
@@ -11,13 +13,23 @@ import {Clone} from "clones-with-immutable-args/Clone.sol";
  */
 contract AuctionImmutableArgs is Clone {
     /**
+     * @notice The fee manager address
+     * @dev using ClonesWithImmutableArgs pattern here to save gas
+     * @dev https://github.com/wighawag/clones-with-immutable-args
+     * @return The fee manager address
+     */
+    function feeManager() public pure returns (IAuctionFeeManager) {
+        return IAuctionFeeManager(_getArgAddress(0));
+    }
+
+    /**
      * @notice The asset being used to make bids
      * @dev using ClonesWithImmutableArgs pattern here to save gas
      * @dev https://github.com/wighawag/clones-with-immutable-args
      * @return The asset being used to make bids
      */
     function bidAsset() public pure returns (ERC20) {
-        return ERC20(_getArgAddress(0));
+        return ERC20(_getArgAddress(20));
     }
 
     /**
@@ -27,7 +39,7 @@ contract AuctionImmutableArgs is Clone {
      * @return The asset being used to make asks
      */
     function askAsset() public pure returns (ERC20) {
-        return ERC20(_getArgAddress(20));
+        return ERC20(_getArgAddress(40));
     }
 
     /**
@@ -37,7 +49,7 @@ contract AuctionImmutableArgs is Clone {
      * @return The minimum allowed price
      */
     function minPrice() public pure returns (uint256) {
-        return _getArgUint256(40);
+        return _getArgUint256(60);
     }
 
     /**
@@ -50,7 +62,7 @@ contract AuctionImmutableArgs is Clone {
      * @return The maximum allowed price
      */
     function maxPrice() public pure returns (uint256) {
-        return _getArgUint256(72);
+        return _getArgUint256(92);
     }
 
     /**
@@ -60,7 +72,7 @@ contract AuctionImmutableArgs is Clone {
      * @return The width of ticks
      */
     function tickWidth() public pure returns (uint256) {
-        return _getArgUint256(104);
+        return _getArgUint256(124);
     }
 
     /**
@@ -70,7 +82,7 @@ contract AuctionImmutableArgs is Clone {
      * @return The timestamp at which the auction will end
      */
     function endDate() public pure returns (uint256) {
-        return _getArgUint256(136);
+        return _getArgUint256(156);
     }
 
     /**
@@ -80,7 +92,7 @@ contract AuctionImmutableArgs is Clone {
      * @return The number of decimals for the bid asset
      */
     function bidAssetDecimals() public pure returns (uint256) {
-        return _getArgUint8(168);
+        return _getArgUint8(188);
     }
 
     /**
@@ -90,6 +102,6 @@ contract AuctionImmutableArgs is Clone {
      * @return The number of decimals for the ask asset
      */
     function askAssetDecimals() public pure returns (uint256) {
-        return _getArgUint8(169);
+        return _getArgUint8(189);
     }
 }

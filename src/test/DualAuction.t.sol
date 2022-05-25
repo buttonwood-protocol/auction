@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
+
 pragma solidity 0.8.10;
 
 import {DSTestPlus} from "solmate/test/utils/DSTestPlus.sol";
 import {MockERC20} from "./mock/MockERC20.sol";
 import {AuctionUser} from "./mock/users/AuctionUser.sol";
+import {AuctionFactoryAdmin} from "./mock/users/AuctionFactoryAdmin.sol";
 import {DualAuctionFactory} from "../DualAuctionFactory.sol";
 import {DualAuction} from "../DualAuction.sol";
 
@@ -131,8 +133,6 @@ contract DualAuctionTest is DSTestPlus {
         assertEq(auction.toAskTokenId(askId + price), askId + price);
     }
 
-    // BID
-
     function testBidBasic() public {
         // 1 for 1
         uint256 amount = 10**18;
@@ -229,10 +229,7 @@ contract DualAuctionTest is DSTestPlus {
         newUser.bid(amount, 10**16);
     }
 
-    // ASK
-
     function testAskBasic() public {
-        // 1 token at 1:1 price
         uint256 amount = 10**18;
         uint256 price = 10**18;
 
@@ -611,6 +608,7 @@ contract DualAuctionTest is DSTestPlus {
             auction.toBidTokenId(10**16 * 20),
             lowBidderShares
         );
+
         // not cleared at all
         assertEq(bidReceived, amount);
         assertEq(askReceived, 0);
@@ -626,6 +624,7 @@ contract DualAuctionTest is DSTestPlus {
             auction.toAskTokenId(10**16 * 40),
             lowAskerShares
         );
+
         // fully cleared at 0.50
         assertEq(bidReceived, amount / 2);
         assertEq(askReceived, 0);
@@ -634,6 +633,7 @@ contract DualAuctionTest is DSTestPlus {
             auction.toAskTokenId(10**16 * 70),
             highAskerShares
         );
+
         // not cleared at all
         assertEq(bidReceived, 0);
         assertEq(askReceived, amount);
@@ -785,7 +785,7 @@ contract DualAuctionTest is DSTestPlus {
             auction.toBidTokenId(10**16 * 60),
             otherBidderShares
         );
-        // fully cleared at 0.50
+
         assertEq(bidReceived, 10**16 * 75);
         assertEq(askReceived, 10**16 * 50);
 
@@ -793,7 +793,6 @@ contract DualAuctionTest is DSTestPlus {
         assertEq(bidAsset.balanceOf(address(auction)), 0);
     }
 
-    // found during fuzzing of random bids and asks
     function testOversubscriptionCounterexample() public {
         uint256 amount = 10**18;
         AuctionUser bidder = new AuctionUser(address(auction));
@@ -831,7 +830,7 @@ contract DualAuctionTest is DSTestPlus {
             auction.toAskTokenId(10**16 * 20),
             lowAskerShares
         );
-        // fully cleared at 0.50
+
         assertEq(bidReceived, 10**17 * 4);
         assertEq(askReceived, 0);
 
@@ -839,7 +838,7 @@ contract DualAuctionTest is DSTestPlus {
             auction.toAskTokenId(10**16 * 70),
             highAskerShares
         );
-        // not cleared at all
+
         assertEq(bidReceived, 0);
         assertEq(askReceived, amount);
 
@@ -847,7 +846,7 @@ contract DualAuctionTest is DSTestPlus {
             auction.toAskTokenId(10**16 * 30),
             midAskerShares
         );
-        // fully cleared at 0.50
+
         assertEq(bidReceived, (10**18 * 4) / 10);
         assertEq(askReceived, 0);
 
@@ -856,7 +855,7 @@ contract DualAuctionTest is DSTestPlus {
     }
 
     function testRandomBidsAsks(uint128 seed) public {
-        // note: can parameterize count or change it, but runs very slow at high values
+        // note can parameterize or change count, but runs very slow at high values
         uint8 count = 4;
         uint256[] memory tokenIds = new uint256[](count);
         uint256[] memory amounts = new uint256[](count);
@@ -894,9 +893,188 @@ contract DualAuctionTest is DSTestPlus {
             user.redeem(tokenId, amount);
         }
 
-        // some floor rounding is bound to happen
+        // some floor rounding leaves a bit of dust behind
         assertEqThreshold(bidAsset.balanceOf(address(auction)), 0, 20);
         assertEqThreshold(askAsset.balanceOf(address(auction)), 0, 20);
+    }
+
+    function testSetFee() public {
+        assertEq(factory.fee(), 0);
+        factory.setFee(100);
+        assertEq(factory.fee(), 100);
+    }
+
+    function testFailSetFeeNotAuthorized() public {
+        AuctionFactoryAdmin unauthorized = new AuctionFactoryAdmin(
+            address(factory)
+        );
+        unauthorized.setFee(100);
+    }
+
+    function testSetAdmin() public {
+        assertEq(factory.owner(), address(this));
+        AuctionFactoryAdmin newAdmin = new AuctionFactoryAdmin(
+            address(factory)
+        );
+        factory.transferOwnership(address(newAdmin));
+        assertEq(factory.owner(), address(newAdmin));
+        newAdmin.setFee(100);
+    }
+
+    function testFailAuthorizationAfterOwnershipChange() public {
+        assertEq(factory.owner(), address(this));
+        AuctionFactoryAdmin newAdmin = new AuctionFactoryAdmin(
+            address(factory)
+        );
+        factory.transferOwnership(address(newAdmin));
+        assertEq(factory.owner(), address(newAdmin));
+        factory.setFee(100);
+    }
+
+    function testFailMaxFee() public {
+        factory.setFee(10001);
+    }
+
+    function testNoBidFeesTakenIfNotCleared() public {
+        uint256 amount = 10**18;
+        uint256 price = 10**18;
+        factory.setFee(100);
+        bidAsset.mint(address(user), amount);
+        user.approve(address(bidAsset), amount);
+        uint256 bidShares = user.bid(amount, price);
+        hevm.warp(initialTimestamp + 2 days);
+        auction.settle();
+
+        (uint256 bidReceived, uint256 askReceived) = user.redeem(
+            auction.toBidTokenId(price),
+            bidShares
+        );
+        assertEq(bidReceived, amount);
+        assertEq(askReceived, 0);
+        assertEq(bidAsset.balanceOf(address(factory)), 0);
+        assertEq(askAsset.balanceOf(address(factory)), 0);
+    }
+
+    function testNoAskFeesTakenIfNotCleared() public {
+        uint256 amount = 10**18;
+        uint256 price = 10**18;
+        factory.setFee(100);
+        askAsset.mint(address(user), amount);
+        user.approve(address(askAsset), amount);
+        uint256 askShares = user.ask(amount, price);
+        hevm.warp(initialTimestamp + 2 days);
+        auction.settle();
+
+        (uint256 bidReceived, uint256 askReceived) = user.redeem(
+            auction.toAskTokenId(price),
+            askShares
+        );
+        assertEq(bidReceived, 0);
+        assertEq(askReceived, amount);
+        assertEq(bidAsset.balanceOf(address(factory)), 0);
+        assertEq(askAsset.balanceOf(address(factory)), 0);
+    }
+
+    function testTakeFees() public {
+        uint256 amount = 10**18;
+        uint256 price = 10**18;
+        factory.setFee(100);
+        askAsset.mint(address(user), amount);
+        user.approve(address(askAsset), amount);
+        uint256 askShares = user.ask(amount, price);
+        bidAsset.mint(address(user), amount);
+        user.approve(address(bidAsset), amount);
+        uint256 bidShares = user.bid(amount, price);
+        hevm.warp(initialTimestamp + 2 days);
+        auction.settle();
+
+        assertEq(askAsset.balanceOf(address(user)), 0);
+        (uint256 bidReceived, uint256 askReceived) = user.redeem(
+            auction.toBidTokenId(price),
+            bidShares
+        );
+        assertEq(bidReceived, 0);
+        assertEq(askReceived, 10**18);
+        assertEq(askAsset.balanceOf(address(user)), amount - 10**16);
+
+        assertEq(bidAsset.balanceOf(address(user)), 0);
+        (bidReceived, askReceived) = user.redeem(
+            auction.toAskTokenId(price),
+            askShares
+        );
+        assertEq(bidReceived, 10**18);
+        assertEq(askReceived, 0);
+        assertEq(bidAsset.balanceOf(address(user)), amount - 10**16);
+        assertEq(bidAsset.balanceOf(address(auction)), 0);
+        assertEq(askAsset.balanceOf(address(auction)), 0);
+        assertEq(bidAsset.balanceOf(address(factory)), 10**16);
+        assertEq(askAsset.balanceOf(address(factory)), 10**16);
+    }
+
+    function testRandomBidsAsksWithFee(uint128 seed) public {
+        // note can parameterize or change count, but runs very slow at high values
+        uint8 count = 4;
+        uint256[] memory tokenIds = new uint256[](count);
+        uint256[] memory amounts = new uint256[](count);
+        uint256 fee = seed % 10000;
+        factory.setFee(fee);
+
+        for (uint8 i = 0; i < count; i++) {
+            if (seed + i == type(uint128).max) seed = 0;
+            uint256 runSeed = uint256(keccak256(abi.encode(seed + i)));
+            uint256 amount = uint256(keccak256(abi.encode(runSeed)));
+            if (amount > 2**126 - 1) amount = (amount % 2**126) - 1;
+            uint256 price = coercePrice(
+                uint256(keccak256(abi.encode(runSeed + 1)))
+            );
+            bool isBid = uint256(keccak256(abi.encode(runSeed + 2))) % 2 == 0;
+
+            if (isBid) {
+                bidAsset.mint(address(user), amount);
+                user.approve(address(bidAsset), amount);
+                uint256 bidShares = user.bid(amount, price);
+                tokenIds[i] = auction.toBidTokenId(price);
+                amounts[i] = bidShares;
+            } else {
+                askAsset.mint(address(user), amount);
+                user.approve(address(askAsset), amount);
+                uint256 askShares = user.ask(amount, price);
+                tokenIds[i] = auction.toAskTokenId(price);
+                amounts[i] = askShares;
+            }
+        }
+        hevm.warp(initialTimestamp + 2 days);
+        auction.settle();
+
+        uint256 totalBidCleared;
+        uint256 totalAskCleared;
+        for (uint256 i = 0; i < count; i++) {
+            uint256 tokenId = tokenIds[i];
+            uint256 amount = amounts[i];
+            (uint256 bidTokens, uint256 askTokens) = user.redeem(
+                tokenId,
+                amount
+            );
+            if (auction.toPrice(tokenId) == tokenId) {
+                totalAskCleared += askTokens;
+            } else {
+                totalBidCleared += bidTokens;
+            }
+        }
+
+        // some floor rounding leaves a bit of dust behind
+        assertEqThreshold(bidAsset.balanceOf(address(auction)), 0, 10);
+        assertEqThreshold(askAsset.balanceOf(address(auction)), 0, 10);
+        assertEqThreshold(
+            bidAsset.balanceOf(address(factory)),
+            (totalBidCleared * fee) / 10000,
+            10
+        );
+        assertEqThreshold(
+            askAsset.balanceOf(address(factory)),
+            (totalAskCleared * fee) / 10000,
+            10
+        );
     }
 
     function coercePrice(uint256 price) internal view returns (uint256) {

@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
+
 pragma solidity 0.8.10;
+
 import {DualAuction} from "../../../DualAuction.sol";
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {ERC1155Holder} from "openzeppelin-contracts/contracts/token/ERC1155/utils/ERC1155Holder.sol";
@@ -23,8 +25,10 @@ contract AuctionUser is ERC1155Holder {
         return auction.ask(amount, price);
     }
 
-    function redeem(uint256 tokenId, uint256 amount) external returns (uint256, uint256) {
+    function redeem(uint256 tokenId, uint256 amount)
+        external
+        returns (uint256, uint256)
+    {
         return auction.redeem(tokenId, amount);
     }
 }
-

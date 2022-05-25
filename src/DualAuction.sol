@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
+
 pragma solidity 0.8.10;
 
 import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
@@ -25,6 +26,9 @@ contract DualAuction is
     /// @notice the maximum allowed price is 2^255 because we save the top bit for
     /// differentiating between bids and asks in the token id
     uint256 internal constant MAXIMUM_ALLOWED_PRICE = 2**255 - 1;
+
+    /// @notice 10000 basis points = 100%
+    uint256 internal constant BASIS_POINTS_DENOMINATOR = 10000;
 
     /// @notice The highest bid received so far
     uint256 public maxBid;
@@ -223,6 +227,11 @@ contract DualAuction is
     {
         if (amount == 0) revert InvalidAmount();
         (bidTokens, askTokens) = shareValue(amount, tokenId);
+        (uint256 bidFee, uint256 askFee) = getFees(
+            tokenId,
+            bidTokens,
+            askTokens
+        );
         bool isBid = toBidTokenId(tokenId) == tokenId;
 
         _burn(msg.sender, tokenId, amount);
@@ -230,15 +239,43 @@ contract DualAuction is
         if (bidTokens > 0) {
             if (!isBid && toPrice(tokenId) == clearingAskPrice)
                 bidTokensClearedAtClearing -= bidTokens;
-            bidTokens = min(bidTokens, bidAsset().balanceOf(address(this)));
-            SafeTransferLib.safeTransfer(bidAsset(), msg.sender, bidTokens);
+            if (bidFee > 0) {
+                SafeTransferLib.safeTransfer(
+                    bidAsset(),
+                    address(feeManager()),
+                    bidFee
+                );
+            }
+            uint256 bidTokenOutput = min(
+                bidTokens - bidFee,
+                bidAsset().balanceOf(address(this))
+            );
+            SafeTransferLib.safeTransfer(
+                bidAsset(),
+                msg.sender,
+                bidTokenOutput
+            );
         }
 
         if (askTokens > 0) {
             if (isBid && toPrice(tokenId) == clearingBidPrice)
                 askTokensClearedAtClearing -= askTokens;
-            askTokens = min(askTokens, askAsset().balanceOf(address(this)));
-            SafeTransferLib.safeTransfer(askAsset(), msg.sender, askTokens);
+            if (askFee > 0) {
+                SafeTransferLib.safeTransfer(
+                    askAsset(),
+                    address(feeManager()),
+                    askFee
+                );
+            }
+            uint256 askTokenOutput = min(
+                askTokens - askFee,
+                askAsset().balanceOf(address(this))
+            );
+            SafeTransferLib.safeTransfer(
+                askAsset(),
+                msg.sender,
+                askTokenOutput
+            );
         }
 
         emit Redeem(msg.sender, tokenId, amount, bidTokens, askTokens);
@@ -312,6 +349,29 @@ contract DualAuction is
                     : bidToAsk(askValue - cleared, _clearingPrice);
                 return (cleared, notCleared);
             }
+        }
+    }
+
+    /**
+     * @notice Get the fees to take from cleared tokens
+     * @param tokenId the token id of the redeemed slip
+     * @param bidTokens The number of bid tokens that the tokenId shares were worth
+     * @param askTokens The number of ask tokens that the tokenId shares were worth
+     * @return bidFee The number of bid tokens to be paid as a fee
+     * @return askFee the number of ask tokens to be paid as a fee
+     */
+    function getFees(
+        uint256 tokenId,
+        uint256 bidTokens,
+        uint256 askTokens
+    ) internal view returns (uint256 bidFee, uint256 askFee) {
+        uint256 fee = feeManager().fee();
+
+        if (toPrice(tokenId) == tokenId) {
+            // if bid token, return the cleared ask tokens
+            return (0, (askTokens * fee) / BASIS_POINTS_DENOMINATOR);
+        } else {
+            return ((bidTokens * fee) / BASIS_POINTS_DENOMINATOR, 0);
         }
     }
 }
