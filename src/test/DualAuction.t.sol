@@ -6,7 +6,7 @@ import {MockERC20} from "./mock/MockERC20.sol";
 import {AuctionUser} from "./mock/users/AuctionUser.sol";
 import {DualAuctionFactory} from "../DualAuctionFactory.sol";
 import {DualAuction} from "../DualAuction.sol";
-import "forge-std/vm.sol";
+import "forge-std/Vm.sol";
 
 
 contract DualAuctionTest is DSTestPlus {
