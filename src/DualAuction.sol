@@ -223,7 +223,7 @@ contract DualAuction is
     {
         if (amount == 0) revert InvalidAmount();
         (bidTokens, askTokens) = shareValue(amount, tokenId);
-        bool isBid = toBidTokenId(tokenId) == tokenId;
+        bool isBid = isBid(tokenId);
 
         _burn(msg.sender, tokenId, amount);
 
@@ -272,7 +272,7 @@ contract DualAuction is
         uint256 price = toPrice(tokenId);
         uint256 _clearingPrice = clearingPrice();
 
-        if (toBidTokenId(tokenId) == tokenId) {
+        if (isBid(tokenId)) {
             uint256 _clearingBid = clearingBidPrice;
             if (_clearingPrice == 0 || price < _clearingBid) {
                 // not cleared at all

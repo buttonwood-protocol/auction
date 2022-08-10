@@ -16,7 +16,8 @@ contract AuctionConversions is IAuctionConversions, AuctionImmutableArgs {
      * @dev ask token ids are just the price, with the top bit equal to 1
      */
     function toAskTokenId(uint256 price) public pure returns (uint256) {
-        // 0x10000000... | price
+        require(price < 2**255, "Price too high");
+        // 0x80000000... | price
         // sets the top bit to 1, leaving the rest unchanged
         return price | (2**255);
     }
@@ -26,16 +27,24 @@ contract AuctionConversions is IAuctionConversions, AuctionImmutableArgs {
      * @dev bid token ids are just the price, with the top bit equal to 0
      */
     function toBidTokenId(uint256 price) public pure returns (uint256) {
-        // 0x01111111... & price
-        // sets the top bit to 0, leaving the rest unchanged
-        return price & (2**255 - 1);
+        require(price < 2**255, "Price too high");
+        // Price is required to be less than 2**255, so we can just return it since top bit is already 0
+        return price;
+    }
+
+    /**
+     * @notice Checks if tokenId is a bid token id
+     */
+    function isBid(uint256 tokenId) public pure returns (bool) {
+        // Top bit is 0
+        return (tokenId >> 255) == 0;
     }
 
     /**
      * @notice Transforms a tokenId into a normal price
      */
     function toPrice(uint256 tokenId) public pure returns (uint256) {
-        return toBidTokenId(tokenId);
+        return (tokenId << 1) >> 1;
     }
 
     /**

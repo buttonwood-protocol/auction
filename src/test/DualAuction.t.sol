@@ -6,6 +6,8 @@ import {MockERC20} from "./mock/MockERC20.sol";
 import {AuctionUser} from "./mock/users/AuctionUser.sol";
 import {DualAuctionFactory} from "../DualAuctionFactory.sol";
 import {DualAuction} from "../DualAuction.sol";
+import "forge-std/vm.sol";
+
 
 contract DualAuctionTest is DSTestPlus {
     DualAuctionFactory factory;
@@ -14,6 +16,8 @@ contract DualAuctionTest is DSTestPlus {
     MockERC20 askAsset;
     AuctionUser user;
     uint256 initialTimestamp;
+
+    Vm public constant vm = Vm(HEVM_ADDRESS);
 
     function setUp() public {
         bidAsset = new MockERC20("Bid", "BID", 18);
@@ -116,19 +120,47 @@ contract DualAuctionTest is DSTestPlus {
     }
 
     function testToBidTokenId(uint128 price) public {
-        uint256 askId = uint256(
+        uint256 bidLimit = uint256(
             0x8000000000000000000000000000000000000000000000000000000000000000
         );
+        vm.assume(price < bidLimit);
         assertEq(auction.toBidTokenId(price), price);
-        assertEq(auction.toBidTokenId(askId + price), price);
+    }
+
+    function testCannotToBidTokenIdPriceTooHigh() public {
+        vm.expectRevert('Price too high');
+        uint256 price = uint256(
+            0x8000000000000000000000000000000000000000000000000000000000000000
+        );
+        auction.toBidTokenId(price);
     }
 
     function testToAskTokenId(uint128 price) public {
-        uint256 askId = uint256(
+        uint256 askLimit = uint256(
             0x8000000000000000000000000000000000000000000000000000000000000000
         );
-        assertEq(auction.toAskTokenId(price), askId + price);
-        assertEq(auction.toAskTokenId(askId + price), askId + price);
+        vm.assume(price < askLimit);
+        assertEq(auction.toAskTokenId(price), askLimit + price);
+    }
+
+    function testCannotToAskTokenIdPriceTooHigh() public {
+        vm.expectRevert('Price too high');
+        uint256 price = uint256(
+            0x8000000000000000000000000000000000000000000000000000000000000000
+        );
+        auction.toAskTokenId(price);
+    }
+
+    function testToPrice(uint256 tokenId) public {
+        uint256 tokenIdLowerLimit = uint256(
+            0x8000000000000000000000000000000000000000000000000000000000000000
+        );
+        vm.assume(tokenId > tokenIdLowerLimit);
+        assertEq(auction.toPrice(tokenId), tokenId & (2**255 - 1));
+    }
+
+    function testIsBid(uint256 tokenId) public {
+        assertTrue(auction.isBid(tokenId) == ((tokenId & (2**255)) == 0));
     }
 
     // BID
