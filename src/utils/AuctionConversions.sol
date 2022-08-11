@@ -66,7 +66,7 @@ contract AuctionConversions is AuctionImmutableArgs {
         pure
         returns (uint256)
     {
-        if (price == 0) return 0;
+        require(price > 0, "Price must be non-zero");
         return
             FixedPointMathLib.mulDivDown(
                 bidTokens,
