@@ -9,8 +9,6 @@ import {DualAuctionFactory} from "../DualAuctionFactory.sol";
 import {DualAuction} from "../DualAuction.sol";
 import "forge-std/Vm.sol";
 
-uint256 constant MAX_INT = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
-
 contract AuctionConversionsTest is DSTestPlus {
     AuctionConversions auctionConversions;
     MockERC20 bidAsset;
@@ -53,7 +51,7 @@ contract AuctionConversionsTest is DSTestPlus {
 
     function testBidToAsk(uint256 bidTokens, uint256 price) public {
         // Ensuring that the overflow won't happen
-        vm.assume(MAX_INT / (10**18) >= bidTokens);
+        vm.assume(type(uint256).max / (10**18) >= bidTokens);
         vm.assume(price > uint128(0));
         assertEq(
             auctionConversions.bidToAsk(bidTokens, price),
@@ -63,7 +61,7 @@ contract AuctionConversionsTest is DSTestPlus {
 
     function testCannotBidToAskOverflow(uint256 bidTokens, uint256 price) public {
         vm.assume(price > uint128(0));
-        vm.assume(MAX_INT / (10**18) < bidTokens);
+        vm.assume(type(uint256).max / (10**18) < bidTokens);
         vm.expectRevert();
         auctionConversions.bidToAsk(bidTokens, price);
     }
