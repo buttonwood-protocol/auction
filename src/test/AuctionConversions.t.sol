@@ -50,8 +50,8 @@ contract AuctionConversionsTest is DSTestPlus {
     }
 
     function testBidToAsk(uint256 bidTokens, uint256 price) public {
-        // Ensuring that the overflow won't happen
-        vm.assume(type(uint256).max / (10**18) >= bidTokens);
+        // Ensuring that the overflow won't happen in the mulDivDown
+        vm.assume(type(uint256).max / (10**bidAsset.decimals()) >= bidTokens);
         vm.assume(price > uint128(0));
         assertEq(
             auctionConversions.bidToAsk(bidTokens, price),
@@ -61,7 +61,8 @@ contract AuctionConversionsTest is DSTestPlus {
 
     function testCannotBidToAskOverflow(uint256 bidTokens, uint256 price) public {
         vm.assume(price > uint128(0));
-        vm.assume(type(uint256).max / (10**18) < bidTokens);
+        // Ensuring that the overflow will happen in the mulDivDown
+        vm.assume(type(uint256).max / (10**bidAsset.decimals()) < bidTokens);
         vm.expectRevert();
         auctionConversions.bidToAsk(bidTokens, price);
     }
