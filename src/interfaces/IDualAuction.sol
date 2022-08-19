@@ -7,16 +7,14 @@ import {ERC1155SupplyUpgradeable} from "openzeppelin-contracts-upgradeable/contr
 import {Initializable} from "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import {Clone} from "clones-with-immutable-args/Clone.sol";
+import {IAuctionConversions} from "./IAuctionConversions.sol";
 
-interface IDualAuction {
+interface IDualAuction is IAuctionConversions {
     /// @notice Zero address given for asset.
     error InvalidAsset();
 
     /// @notice Invalid amount of asset given
     error InvalidAmount();
-
-    /// @notice Price out of bounds
-    error InvalidPrice();
 
     /// @notice The end date has not yet passed
     error AuctionActive();

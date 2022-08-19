@@ -4,11 +4,13 @@ pragma solidity 0.8.10;
 import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
 import {ERC20} from "solmate/tokens/ERC20.sol";
 import {AuctionImmutableArgs} from "./AuctionImmutableArgs.sol";
+import {IAuctionConversions} from "../interfaces/IAuctionConversions.sol";
 
 /**
  * @notice Defines some helper conversion functions for dual auctions
  */
-contract AuctionConversions is AuctionImmutableArgs {
+
+contract AuctionConversions is IAuctionConversions, AuctionImmutableArgs {
     /**
      * @notice Transforms a price into an ask token id
      * @dev ask token ids are just the price, with the top bit equal to 1
@@ -66,7 +68,7 @@ contract AuctionConversions is AuctionImmutableArgs {
         pure
         returns (uint256)
     {
-        require(price > 0, "Price must be non-zero");
+        if (price == 0) revert InvalidPrice();
         return
             FixedPointMathLib.mulDivDown(
                 bidTokens,

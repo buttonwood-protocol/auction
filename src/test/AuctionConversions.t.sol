@@ -10,7 +10,6 @@ import {DualAuction} from "../DualAuction.sol";
 import "forge-std/Vm.sol";
 
 contract AuctionConversionsTest is DSTestPlus {
-
     AuctionConversions auctionConversions;
     MockERC20 bidAsset;
     MockERC20 askAsset;
@@ -22,7 +21,9 @@ contract AuctionConversionsTest is DSTestPlus {
         bidAsset = new MockERC20("Bid", "BID", 18);
         askAsset = new MockERC20("Ask", "ASK", 18);
         DualAuction implementation = new DualAuction();
-        DualAuctionFactory factory = new DualAuctionFactory(address(implementation));
+        DualAuctionFactory factory = new DualAuctionFactory(
+            address(implementation)
+        );
         initialTimestamp = block.timestamp;
 
         auctionConversions = AuctionConversions(
@@ -52,14 +53,17 @@ contract AuctionConversionsTest is DSTestPlus {
         vm.assume(bidTokens < uint256(0x100000000000000000000000000000000));
         vm.assume(price < uint256(0x100000000000000000000000000000000));
         vm.assume(price > uint128(0));
-        assertEq(auctionConversions.bidToAsk(bidTokens, price), (bidTokens * (10**18)) / price);
+        assertEq(
+            auctionConversions.bidToAsk(bidTokens, price),
+            (bidTokens * (10**18)) / price
+        );
     }
 
     function testCannotBidToAsk(uint256 bidTokens) public {
         vm.assume(bidTokens < uint256(0x800000000000000000));
         uint256 price = uint256(0);
-        vm.expectRevert('Price must be non-zero');
+        vm.expectRevert(abi.encodeWithSignature("InvalidPrice()"));
 
-        auctionConversions.bidToAsk(bidTokens, price);
+    auctionConversions.bidToAsk(bidTokens, price);
     }
 }
