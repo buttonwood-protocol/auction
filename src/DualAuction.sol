@@ -120,7 +120,7 @@ contract DualAuction is
             address(this),
             amountIn
         );
-        _mint(msg.sender, price, amountIn, "");
+        _mint(msg.sender, toBidTokenId(price), amountIn, "");
         emit Bid(msg.sender, amountIn, amountIn, price);
         return amountIn;
     }
