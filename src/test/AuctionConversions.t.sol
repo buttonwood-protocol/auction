@@ -9,6 +9,8 @@ import {DualAuctionFactory} from "../DualAuctionFactory.sol";
 import {DualAuction} from "../DualAuction.sol";
 import "forge-std/Vm.sol";
 
+uint256 constant MAX_INT = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+
 contract AuctionConversionsTest is DSTestPlus {
     AuctionConversions auctionConversions;
     MockERC20 bidAsset;
@@ -50,8 +52,8 @@ contract AuctionConversionsTest is DSTestPlus {
     }
 
     function testBidToAsk(uint256 bidTokens, uint256 price) public {
-        vm.assume(bidTokens < uint256(0x100000000000000000000000000000000));
-        vm.assume(price < uint256(0x100000000000000000000000000000000));
+        // Ensuring that the overflow won't happen
+        vm.assume(MAX_INT / (10**18) >= bidTokens);
         vm.assume(price > uint128(0));
         assertEq(
             auctionConversions.bidToAsk(bidTokens, price),
@@ -59,11 +61,18 @@ contract AuctionConversionsTest is DSTestPlus {
         );
     }
 
-    function testCannotBidToAsk(uint256 bidTokens) public {
-        vm.assume(bidTokens < uint256(0x800000000000000000));
+    function testCannotBidToAskOverflow(uint256 bidTokens, uint256 price) public {
+        vm.assume(price > uint128(0));
+        vm.assume(MAX_INT / (10**18) < bidTokens);
+        vm.expectRevert();
+        auctionConversions.bidToAsk(bidTokens, price);
+    }
+
+    function testCannotBidToAskZeroPrice(uint256 bidTokens) public {
         uint256 price = uint256(0);
         vm.expectRevert(abi.encodeWithSignature("InvalidPrice()"));
-
-    auctionConversions.bidToAsk(bidTokens, price);
+        auctionConversions.bidToAsk(bidTokens, price);
     }
+
+
 }
