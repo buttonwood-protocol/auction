@@ -119,50 +119,6 @@ contract DualAuctionTest is DSTestPlus {
         );
     }
 
-    function testToBidTokenId(uint128 price) public {
-        uint256 bidLimit = uint256(
-            0x8000000000000000000000000000000000000000000000000000000000000000
-        );
-        vm.assume(price < bidLimit);
-        assertEq(auction.toBidTokenId(price), price);
-    }
-
-    function testCannotToBidTokenIdPriceTooHigh() public {
-        vm.expectRevert('Price too high');
-        uint256 price = uint256(
-            0x8000000000000000000000000000000000000000000000000000000000000000
-        );
-        auction.toBidTokenId(price);
-    }
-
-    function testToAskTokenId(uint128 price) public {
-        uint256 askLimit = uint256(
-            0x8000000000000000000000000000000000000000000000000000000000000000
-        );
-        vm.assume(price < askLimit);
-        assertEq(auction.toAskTokenId(price), askLimit + price);
-    }
-
-    function testCannotToAskTokenIdPriceTooHigh() public {
-        vm.expectRevert('Price too high');
-        uint256 price = uint256(
-            0x8000000000000000000000000000000000000000000000000000000000000000
-        );
-        auction.toAskTokenId(price);
-    }
-
-    function testToPrice(uint256 tokenId) public {
-        uint256 tokenIdLowerLimit = uint256(
-            0x8000000000000000000000000000000000000000000000000000000000000000
-        );
-        vm.assume(tokenId > tokenIdLowerLimit);
-        assertEq(auction.toPrice(tokenId), tokenId & (2**255 - 1));
-    }
-
-    function testIsBid(uint256 tokenId) public {
-        assertTrue(auction.isBid(tokenId) == ((tokenId & (2**255)) == 0));
-    }
-
     // BID
 
     function testBidBasic() public {
