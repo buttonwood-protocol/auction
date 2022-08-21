@@ -114,14 +114,17 @@ contract DualAuction is
     {
         if (amountIn == 0) revert InvalidAmount();
         if (price > maxBid) maxBid = price;
+        uint256 preTransferBalance = bidAsset().balanceOf(address(this));
         SafeTransferLib.safeTransferFrom(
             bidAsset(),
             msg.sender,
             address(this),
             amountIn
         );
-        _mint(msg.sender, price, amountIn, "");
-        emit Bid(msg.sender, amountIn, amountIn, price);
+        uint256 postTransferBalance = bidAsset().balanceOf(address(this));
+        uint256 bidAmount = postTransferBalance - preTransferBalance;
+        _mint(msg.sender, price, bidAmount, "");
+        emit Bid(msg.sender, amountIn, bidAmount, price);
         return amountIn;
     }
 
@@ -137,14 +140,17 @@ contract DualAuction is
     {
         if (amountIn == 0) revert InvalidAmount();
         if (minAsk == 0 || price < minAsk) minAsk = price;
+        uint256 preTransferBalance = askAsset().balanceOf(address(this));
         SafeTransferLib.safeTransferFrom(
             askAsset(),
             msg.sender,
             address(this),
             amountIn
         );
-        _mint(msg.sender, toAskTokenId(price), amountIn, "");
-        emit Ask(msg.sender, amountIn, amountIn, price);
+        uint256 postTransferBalance = askAsset().balanceOf(address(this));
+        uint256 askAmount = postTransferBalance - preTransferBalance;
+        _mint(msg.sender, toAskTokenId(price), askAmount, "");
+        emit Ask(msg.sender, amountIn, askAmount, price);
         return amountIn;
     }
 
