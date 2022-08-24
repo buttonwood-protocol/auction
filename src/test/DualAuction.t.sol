@@ -8,7 +8,6 @@ import {DualAuctionFactory} from "../DualAuctionFactory.sol";
 import {DualAuction} from "../DualAuction.sol";
 import "forge-std/Vm.sol";
 
-
 contract DualAuctionTest is DSTestPlus {
     DualAuctionFactory factory;
     DualAuction auction;
@@ -37,6 +36,20 @@ contract DualAuctionTest is DSTestPlus {
             )
         );
         user = new AuctionUser(address(auction));
+    }
+
+    function testInstantiationExactEndDateExpectAuctionEnded() public {
+        vm.expectRevert(abi.encodeWithSignature("AuctionEnded()"));
+        DualAuction(
+            factory.createAuction(
+                address(bidAsset),
+                address(askAsset),
+                10**16,
+                10**18,
+                10**16,
+                initialTimestamp
+            )
+        );
     }
 
     function testInstantiation() public {
@@ -181,10 +194,19 @@ contract DualAuctionTest is DSTestPlus {
         user.bid(amount, 10**16 + 10**15);
     }
 
-    function testFailBidAuctionEnded(uint128 amount) public {
+    function testBidExpectAuctionEnded(uint128 amount) public {
         bidAsset.mint(address(user), amount);
         user.approve(address(bidAsset), amount);
         hevm.warp(initialTimestamp + 2 days);
+        vm.expectRevert(abi.encodeWithSignature("AuctionEnded()"));
+        user.bid(amount, 10**16);
+    }
+
+    function testBidExactEndDateExpectAuctionEnded(uint128 amount) public {
+        bidAsset.mint(address(user), amount);
+        user.approve(address(bidAsset), amount);
+        hevm.warp(auction.endDate());
+        vm.expectRevert(abi.encodeWithSignature("AuctionEnded()"));
         user.bid(amount, 10**16);
     }
 
@@ -287,10 +309,19 @@ contract DualAuctionTest is DSTestPlus {
         user.ask(amount, 10**16 + 10**15);
     }
 
-    function testFailAskAuctionEnded(uint128 amount) public {
+    function testAskExpectAuctionEnded(uint128 amount) public {
         askAsset.mint(address(user), amount);
         user.approve(address(askAsset), amount);
         hevm.warp(initialTimestamp + 2 days);
+        vm.expectRevert(abi.encodeWithSignature("AuctionEnded()"));
+        user.ask(amount, 10**16);
+    }
+
+    function testAskExactEndDateExpectAuctionEnded(uint128 amount) public {
+        askAsset.mint(address(user), amount);
+        user.approve(address(askAsset), amount);
+        hevm.warp(auction.endDate());
+        vm.expectRevert(abi.encodeWithSignature("AuctionEnded()"));
         user.ask(amount, 10**16);
     }
 
@@ -718,7 +749,9 @@ contract DualAuctionTest is DSTestPlus {
         user.redeem(auction.toBidTokenId(price), bidShares);
     }
 
-    function testFailRedeemNotSettled() public {
+    // vm.expectRevert() can't catch AuctionNotSettled() error due to forge limitations on functions that return structs
+    // Defaulting to just `testFail`
+    function testFailRedeemAuctionNotSettled() public {
         uint256 amount = 10**18;
         uint256 price = 10**18;
         askAsset.mint(address(user), amount);

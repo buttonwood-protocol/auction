@@ -82,7 +82,10 @@ contract AuctionConversionsTest is DSTestPlus {
     }
 
     function testIsBidTokenId(uint256 tokenId) public {
-        assertTrue(auctionConversions.isBidTokenId(tokenId) == ((tokenId & (2**255)) == 0));
+        assertTrue(
+            auctionConversions.isBidTokenId(tokenId) ==
+                ((tokenId & (2**255)) == 0)
+        );
     }
 
     function testToPrice(uint256 tokenId) public {
@@ -103,7 +106,9 @@ contract AuctionConversionsTest is DSTestPlus {
         );
     }
 
-    function testCannotBidToAskOverflow(uint256 bidTokens, uint256 price) public {
+    function testCannotBidToAskOverflow(uint256 bidTokens, uint256 price)
+        public
+    {
         vm.assume(price > uint128(0));
         // Ensuring that the overflow will happen in the mulDivDown
         vm.assume(type(uint256).max / (10**bidAsset.decimals()) < bidTokens);
