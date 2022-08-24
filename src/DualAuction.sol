@@ -180,7 +180,7 @@ contract DualAuction is
 
             if (currentDesiredAskTokens == 0) {
                 currentDesiredAskTokens = bidToAsk(
-                    totalSupply(currentBid),
+                    totalSupply(toBidTokenId(currentBid)),
                     currentBid
                 );
 
