@@ -40,7 +40,7 @@ contract DualAuctionTest is DSTestPlus {
 
     function testInstantiationExactEndDateExpectAuctionEnded() public {
         vm.expectRevert(abi.encodeWithSignature("AuctionEnded()"));
-        DualAuction auctionExactEndDate = DualAuction(
+        DualAuction(
             factory.createAuction(
                 address(bidAsset),
                 address(askAsset),
@@ -130,22 +130,6 @@ contract DualAuctionTest is DSTestPlus {
             10**16,
             initialTimestamp - 1 days
         );
-    }
-
-    function testToBidTokenId(uint128 price) public {
-        uint256 askId = uint256(
-            0x8000000000000000000000000000000000000000000000000000000000000000
-        );
-        assertEq(auction.toBidTokenId(price), price);
-        assertEq(auction.toBidTokenId(askId + price), price);
-    }
-
-    function testToAskTokenId(uint128 price) public {
-        uint256 askId = uint256(
-            0x8000000000000000000000000000000000000000000000000000000000000000
-        );
-        assertEq(auction.toAskTokenId(price), askId + price);
-        assertEq(auction.toAskTokenId(askId + price), askId + price);
     }
 
     // BID
