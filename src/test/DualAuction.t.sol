@@ -3,6 +3,7 @@ pragma solidity 0.8.10;
 
 import {DSTestPlus} from "solmate/test/utils/DSTestPlus.sol";
 import {MockERC20} from "./mock/MockERC20.sol";
+import {MockDeflationaryERC20} from "./mock/MockDeflationaryERC20.sol";
 import {AuctionUser} from "./mock/users/AuctionUser.sol";
 import {DualAuctionFactory} from "../DualAuctionFactory.sol";
 import {DualAuction} from "../DualAuction.sol";
@@ -140,13 +141,19 @@ contract DualAuctionTest is DSTestPlus {
         uint256 price = 10**18;
 
         bidAsset.mint(address(user), amount);
-        assertEq(auction.balanceOf(address(user), price), 0);
+        assertEq(
+            auction.balanceOf(address(user), auction.toBidTokenId(price)),
+            0
+        );
 
         user.approve(address(bidAsset), amount);
         uint256 output = user.bid(amount, price);
         assertEq(output, amount);
 
-        assertEq(auction.balanceOf(address(user), price), amount);
+        assertEq(
+            auction.balanceOf(address(user), auction.toBidTokenId(price)),
+            amount
+        );
         assertEq(bidAsset.balanceOf(address(user)), 0);
         assertEq(bidAsset.balanceOf(address(auction)), amount);
     }
@@ -156,12 +163,18 @@ contract DualAuctionTest is DSTestPlus {
         price = coercePrice(price);
 
         bidAsset.mint(address(user), amount);
-        assertEq(auction.balanceOf(address(user), price), 0);
+        assertEq(
+            auction.balanceOf(address(user), auction.toBidTokenId(price)),
+            0
+        );
 
         user.approve(address(bidAsset), amount);
         user.bid(amount, price);
 
-        assertEq(auction.balanceOf(address(user), price), amount);
+        assertEq(
+            auction.balanceOf(address(user), auction.toBidTokenId(price)),
+            amount
+        );
         assertEq(bidAsset.balanceOf(address(user)), 0);
         assertEq(bidAsset.balanceOf(address(auction)), amount);
     }
@@ -237,6 +250,62 @@ contract DualAuctionTest is DSTestPlus {
         bidAsset.mint(address(newUser), amount);
         newUser.approve(address(bidAsset), amount);
         newUser.bid(amount, 10**16);
+    }
+
+    function testBidDeflationary() public {
+        uint16 feeBps = 1;
+        MockDeflationaryERC20 bidDeflationaryAsset = new MockDeflationaryERC20(
+            "BidDeflationary",
+            "BID-DEF",
+            18,
+            feeBps
+        );
+
+        DualAuction auctionDeflationary = DualAuction(
+            factory.createAuction(
+                address(bidDeflationaryAsset),
+                address(askAsset),
+                10**16,
+                10**18,
+                10**16,
+                initialTimestamp + 1 days
+            )
+        );
+        AuctionUser userDeflationary = new AuctionUser(
+            address(auctionDeflationary)
+        );
+
+        // 1 for 1
+        uint256 amount = 10**18;
+        uint256 price = 10**18;
+
+        uint256 expectedBidAmount = (amount * (10000 - feeBps)) / 10000;
+
+        bidDeflationaryAsset.mint(address(userDeflationary), amount);
+        assertEq(
+            auctionDeflationary.balanceOf(
+                address(userDeflationary),
+                auctionDeflationary.toBidTokenId(price)
+            ),
+            0
+        );
+
+        userDeflationary.approve(address(bidDeflationaryAsset), amount);
+        uint256 output = userDeflationary.bid(amount, price);
+        assertEq(output, amount);
+
+        assertEq(
+            auctionDeflationary.balanceOf(
+                address(userDeflationary),
+                auctionDeflationary.toBidTokenId(price)
+            ),
+            expectedBidAmount
+        );
+        assertEq(bidDeflationaryAsset.balanceOf(address(userDeflationary)), 0);
+        assertEq(
+            bidDeflationaryAsset.balanceOf(address(auctionDeflationary)),
+            expectedBidAmount
+        );
     }
 
     // ASK
@@ -353,6 +422,63 @@ contract DualAuctionTest is DSTestPlus {
         newUser.approve(address(askAsset), amount);
         newUser.ask(amount, 10**16);
     }
+
+    function testAskDeflationary() public {
+        uint16 feeBps = 1;
+        MockDeflationaryERC20 askDeflationaryAsset = new MockDeflationaryERC20(
+            "AskDeflationary",
+            "ASK-DEF",
+            18,
+            feeBps
+        );
+
+        DualAuction auctionDeflationary = DualAuction(
+            factory.createAuction(
+                address(bidAsset),
+                address(askDeflationaryAsset),
+                10**16,
+                10**18,
+                10**16,
+                initialTimestamp + 1 days
+            )
+        );
+        AuctionUser userDeflationary = new AuctionUser(
+            address(auctionDeflationary)
+        );
+
+        // 1 token at 1:1 price
+        uint256 amount = 10**18;
+        uint256 price = 10**18;
+
+        uint256 expectedAskAmount = (amount * (10000 - feeBps)) / 10000;
+
+        askDeflationaryAsset.mint(address(userDeflationary), amount);
+        assertEq(
+            auctionDeflationary.balanceOf(
+                address(userDeflationary),
+                auctionDeflationary.toAskTokenId(price)
+            ),
+            0
+        );
+
+        userDeflationary.approve(address(askDeflationaryAsset), amount);
+        uint256 output = userDeflationary.ask(amount, price);
+        assertEq(output, amount);
+
+        assertEq(
+            auctionDeflationary.balanceOf(
+                address(userDeflationary),
+                auctionDeflationary.toAskTokenId(price)
+            ),
+            expectedAskAmount
+        );
+        assertEq(
+            askDeflationaryAsset.balanceOf(address(auctionDeflationary)),
+            expectedAskAmount
+        );
+    }
+
+    // SETTLE
 
     function testSettleOnlyBid(uint256 price, uint128 amount) public {
         if (amount == 0) amount = 1;
