@@ -62,7 +62,7 @@ contract DualAuction is
      * @notice Ensures that the auction is active
      */
     modifier onlyAuctionActive() {
-        if (block.timestamp > endDate()) revert AuctionEnded();
+        if (block.timestamp >= endDate()) revert AuctionEnded();
         _;
     }
 
@@ -98,7 +98,7 @@ contract DualAuction is
         if (minPrice() >= maxPrice()) revert InvalidPrice();
         if (maxPrice() > MAXIMUM_ALLOWED_PRICE) revert InvalidPrice();
         if ((maxPrice() - minPrice()) % tickWidth() != 0) revert InvalidPrice();
-        if (endDate() < block.timestamp) revert AuctionEnded();
+        if (endDate() <= block.timestamp) revert AuctionEnded();
         minAsk = type(uint256).max;
     }
 
@@ -123,7 +123,7 @@ contract DualAuction is
         );
         uint256 postTransferBalance = bidAsset().balanceOf(address(this));
         uint256 bidAmount = postTransferBalance - preTransferBalance;
-        _mint(msg.sender, price, bidAmount, "");
+        _mint(msg.sender, toBidTokenId(price), bidAmount, "");
         emit Bid(msg.sender, amountIn, bidAmount, price);
         return amountIn;
     }
@@ -186,7 +186,7 @@ contract DualAuction is
 
             if (currentDesiredAskTokens == 0) {
                 currentDesiredAskTokens = bidToAsk(
-                    totalSupply(currentBid),
+                    totalSupply(toBidTokenId(currentBid)),
                     currentBid
                 );
 
