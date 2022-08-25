@@ -36,27 +36,30 @@ interface IDualAuction is IAuctionConversions {
 
     /// @notice Event declaring that a bid was made
     event Bid(
-        address actor,
+        address indexed actor,
         uint256 amountIn,
         uint256 amountOut,
-        uint256 price
+        uint256 indexed price
     );
 
     /// @notice Event declaring that an ask was made
     event Ask(
-        address actor,
+        address indexed actor,
         uint256 amountIn,
         uint256 amountOut,
-        uint256 price
+        uint256 indexed price
     );
 
     /// @notice Event notifying about the settlement of an auction
-    event Settle(address actor, uint256 clearingPrice);
+    event Settle(
+        address indexed actor,
+        uint256 clearingPrice
+    );
 
     /// @notice Event notifying about the redemption of share tokens
     event Redeem(
-        address actor,
-        uint256 tokenId,
+        address indexed actor,
+        uint256 indexed tokenId,
         uint256 shareAmount,
         uint256 bidValue,
         uint256 askValue
