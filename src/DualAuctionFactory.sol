@@ -28,8 +28,8 @@ contract DualAuctionFactory is IAuctionFactory {
      * @param endDate The timestamp at which the auction will end
      */
     function createAuction(
-        address bidAsset,
-        address askAsset,
+        IERC20 bidAsset,
+        IERC20 askAsset,
         uint256 minPrice,
         uint256 maxPrice,
         uint256 tickWidth,
