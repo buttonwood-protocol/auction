@@ -27,13 +27,15 @@ contract AuctionConversionsTest is DSTestPlus {
         initialTimestamp = block.timestamp;
 
         auctionConversions = AuctionConversions(
-            factory.createAuction(
-                address(bidAsset),
-                address(askAsset),
-                10**16,
-                10**18,
-                10**16,
-                initialTimestamp + 1 days
+            address(
+                factory.createAuction(
+                    address(bidAsset),
+                    address(askAsset),
+                    10**16,
+                    10**18,
+                    10**16,
+                    initialTimestamp + 1 days
+                )
             )
         );
     }

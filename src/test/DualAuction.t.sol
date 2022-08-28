@@ -27,13 +27,15 @@ contract DualAuctionTest is DSTestPlus {
         initialTimestamp = block.timestamp;
 
         auction = DualAuction(
-            factory.createAuction(
-                address(bidAsset),
-                address(askAsset),
-                10**16,
-                10**18,
-                10**16,
-                initialTimestamp + 1 days
+            address(
+                factory.createAuction(
+                    address(bidAsset),
+                    address(askAsset),
+                    10**16,
+                    10**18,
+                    10**16,
+                    initialTimestamp + 1 days
+                )
             )
         );
         user = new AuctionUser(address(auction));
@@ -41,15 +43,13 @@ contract DualAuctionTest is DSTestPlus {
 
     function testInstantiationExactEndDateExpectAuctionEnded() public {
         vm.expectRevert(abi.encodeWithSignature("AuctionEnded()"));
-        DualAuction(
-            factory.createAuction(
-                address(bidAsset),
-                address(askAsset),
-                10**16,
-                10**18,
-                10**16,
-                initialTimestamp
-            )
+        factory.createAuction(
+            address(bidAsset),
+            address(askAsset),
+            10**16,
+            10**18,
+            10**16,
+            initialTimestamp
         );
     }
 
@@ -236,15 +236,18 @@ contract DualAuctionTest is DSTestPlus {
 
     function testFailBidPriceTooLow(uint128 amount) public {
         DualAuction newAuction = DualAuction(
-            factory.createAuction(
-                address(bidAsset),
-                address(askAsset),
-                2 * 10**16,
-                10**18,
-                10**16,
-                initialTimestamp + 1 days
+            address(
+                factory.createAuction(
+                    address(bidAsset),
+                    address(askAsset),
+                    2 * 10**16,
+                    10**18,
+                    10**16,
+                    initialTimestamp + 1 days
+                )
             )
         );
+
         AuctionUser newUser = new AuctionUser(address(newAuction));
 
         bidAsset.mint(address(newUser), amount);
@@ -262,13 +265,15 @@ contract DualAuctionTest is DSTestPlus {
         );
 
         DualAuction auctionDeflationary = DualAuction(
-            factory.createAuction(
-                address(bidDeflationaryAsset),
-                address(askAsset),
-                10**16,
-                10**18,
-                10**16,
-                initialTimestamp + 1 days
+            address(
+                factory.createAuction(
+                    address(bidDeflationaryAsset),
+                    address(askAsset),
+                    10**16,
+                    10**18,
+                    10**16,
+                    initialTimestamp + 1 days
+                )
             )
         );
         AuctionUser userDeflationary = new AuctionUser(
@@ -407,15 +412,18 @@ contract DualAuctionTest is DSTestPlus {
 
     function testFailAskPriceTooLow(uint128 amount) public {
         DualAuction newAuction = DualAuction(
-            factory.createAuction(
-                address(bidAsset),
-                address(askAsset),
-                2 * 10**16,
-                10**18,
-                10**16,
-                initialTimestamp + 1 days
+            address(
+                factory.createAuction(
+                    address(bidAsset),
+                    address(askAsset),
+                    2 * 10**16,
+                    10**18,
+                    10**16,
+                    initialTimestamp + 1 days
+                )
             )
         );
+
         AuctionUser newUser = new AuctionUser(address(newAuction));
 
         askAsset.mint(address(newUser), amount);
@@ -433,15 +441,18 @@ contract DualAuctionTest is DSTestPlus {
         );
 
         DualAuction auctionDeflationary = DualAuction(
-            factory.createAuction(
-                address(bidAsset),
-                address(askDeflationaryAsset),
-                10**16,
-                10**18,
-                10**16,
-                initialTimestamp + 1 days
+            address(
+                factory.createAuction(
+                    address(bidAsset),
+                    address(askDeflationaryAsset),
+                    10**16,
+                    10**18,
+                    10**16,
+                    initialTimestamp + 1 days
+                )
             )
         );
+
         AuctionUser userDeflationary = new AuctionUser(
             address(auctionDeflationary)
         );
