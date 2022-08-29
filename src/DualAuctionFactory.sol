@@ -15,6 +15,7 @@ contract DualAuctionFactory is IAuctionFactory {
     address public immutable implementation;
 
     constructor(address _implementation) {
+        if (_implementation == address(0)) revert InvalidParams();
         implementation = _implementation;
     }
 
