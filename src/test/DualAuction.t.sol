@@ -40,7 +40,7 @@ contract DualAuctionTest is DSTestPlus {
     }
 
     function testInstantiationExactEndDateExpectAuctionEnded() public {
-        vm.expectRevert(abi.encodeWithSignature("AuctionEnded()"));
+        vm.expectRevert(abi.encodeWithSignature("AuctionHasEnded()"));
         DualAuction(
             factory.createAuction(
                 address(bidAsset),
@@ -211,7 +211,7 @@ contract DualAuctionTest is DSTestPlus {
         bidAsset.mint(address(user), amount);
         user.approve(address(bidAsset), amount);
         hevm.warp(initialTimestamp + 2 days);
-        vm.expectRevert(abi.encodeWithSignature("AuctionEnded()"));
+        vm.expectRevert(abi.encodeWithSignature("AuctionHasEnded()"));
         user.bid(amount, 10**16);
     }
 
@@ -219,7 +219,7 @@ contract DualAuctionTest is DSTestPlus {
         bidAsset.mint(address(user), amount);
         user.approve(address(bidAsset), amount);
         hevm.warp(auction.endDate());
-        vm.expectRevert(abi.encodeWithSignature("AuctionEnded()"));
+        vm.expectRevert(abi.encodeWithSignature("AuctionHasEnded()"));
         user.bid(amount, 10**16);
     }
 
@@ -382,7 +382,7 @@ contract DualAuctionTest is DSTestPlus {
         askAsset.mint(address(user), amount);
         user.approve(address(askAsset), amount);
         hevm.warp(initialTimestamp + 2 days);
-        vm.expectRevert(abi.encodeWithSignature("AuctionEnded()"));
+        vm.expectRevert(abi.encodeWithSignature("AuctionHasEnded()"));
         user.ask(amount, 10**16);
     }
 
@@ -390,7 +390,7 @@ contract DualAuctionTest is DSTestPlus {
         askAsset.mint(address(user), amount);
         user.approve(address(askAsset), amount);
         hevm.warp(auction.endDate());
-        vm.expectRevert(abi.encodeWithSignature("AuctionEnded()"));
+        vm.expectRevert(abi.encodeWithSignature("AuctionHasEnded()"));
         user.ask(amount, 10**16);
     }
 
