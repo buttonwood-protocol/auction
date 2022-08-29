@@ -17,22 +17,22 @@ interface IDualAuction is IAuctionConversions {
     error InvalidAmount();
 
     /// @notice The end date has not yet passed
-    error AuctionActive();
+    error AuctionIsActive();
 
     /// @notice The end date has passed
-    error AuctionEnded();
+    error AuctionHasEnded();
 
     /// @notice The auction has not been settled
-    error AuctionNotSettled();
+    error AuctionHasNotSettled();
 
     /// @notice The auction has already been settled
-    error AuctionSettled();
+    error AuctionHasSettled();
 
     /// @notice The auction ended with no clearing price
     error NoClearingPrice();
 
     /// @notice The settlement somehow ended with cleared tokens but no clearing price
-    error SettleFailed();
+    error SettleHasFailed();
 
     /// @notice Event declaring that a bid was made
     event Bid(
