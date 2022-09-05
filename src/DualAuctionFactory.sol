@@ -19,14 +19,7 @@ contract DualAuctionFactory is IAuctionFactory {
     }
 
     /**
-     * @notice Creates a new auction
-     * @param bidAsset The asset that bids are made with
-     * @param askAsset The asset that asks are made with
-     * @param minPrice The minimum allowed price in terms of bidAsset
-     * @param maxPrice The maximum allowed price in terms of bidAsset
-     * @param tickWidth The spacing between valid prices
-     * @param endDate The timestamp at which the auction will end
-     * @return auction The address of the new auction
+     * @inheritdoc IAuctionFactory
      */
     function createAuction(
         address bidAsset,
