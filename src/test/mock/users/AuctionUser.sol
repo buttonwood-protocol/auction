@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.10;
-import {DualAuction} from "../../../DualAuction.sol";
+import {IDualAuction} from "../../../interfaces/IDualAuction.sol";
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {ERC1155Holder} from "openzeppelin-contracts/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
 contract AuctionUser is ERC1155Holder {
-    DualAuction private auction;
+    IDualAuction private auction;
 
-    constructor(address _auction) {
-        auction = DualAuction(_auction);
+    constructor(IDualAuction _auction) {
+        auction = IDualAuction(_auction);
     }
 
     function approve(address asset, uint256 amount) external {
@@ -27,4 +27,3 @@ contract AuctionUser is ERC1155Holder {
         return auction.redeem(tokenId, amount);
     }
 }
-
