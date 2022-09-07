@@ -7,9 +7,10 @@ import {MockDeflationaryERC20} from "./mock/MockDeflationaryERC20.sol";
 import {AuctionUser} from "./mock/users/AuctionUser.sol";
 import {DualAuctionFactory} from "../DualAuctionFactory.sol";
 import {DualAuction} from "../DualAuction.sol";
+import {IAuctionFactory} from "../interfaces/IAuctionFactory.sol";
 import "forge-std/Vm.sol";
 
-contract DualAuctionTest is DSTestPlus {
+contract DualAuctionTest is IAuctionFactory, DSTestPlus {
     DualAuctionFactory factory;
     DualAuction auction;
     MockERC20 bidAsset;
@@ -26,6 +27,13 @@ contract DualAuctionTest is DSTestPlus {
         factory = new DualAuctionFactory(address(implementation));
         initialTimestamp = block.timestamp;
 
+        vm.expectEmit(true, true, true, true, address(factory));
+        emit AuctionCreated(
+            address(bidAsset),
+            address(askAsset),
+            initialTimestamp + 1 days,
+            address(this)
+        );
         auction = DualAuction(
             factory.createAuction(
                 address(bidAsset),
