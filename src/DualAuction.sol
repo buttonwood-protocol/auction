@@ -165,7 +165,10 @@ contract DualAuction is
         uint256 currentAsk = minAsk;
 
         // no overlap, nothing will be cleared
-        if (currentBid < currentAsk) return 0;
+        if (currentBid < currentAsk) {
+            emit Settle(msg.sender, 0);
+            return 0;
+        }
 
         uint256 lowBid = currentBid;
         uint256 highAsk = currentAsk;
