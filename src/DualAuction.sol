@@ -62,7 +62,7 @@ contract DualAuction is
      * @notice Ensures that the auction is active
      */
     modifier onlyAuctionActive() {
-        if (block.timestamp >= endDate()) revert AuctionEnded();
+        if (block.timestamp >= endDate()) revert AuctionHasEnded();
         _;
     }
 
@@ -70,7 +70,7 @@ contract DualAuction is
      * @notice Ensures that the auction is finalized
      */
     modifier onlyAuctionEnded() {
-        if (block.timestamp < endDate()) revert AuctionActive();
+        if (block.timestamp < endDate()) revert AuctionIsActive();
         _;
     }
 
@@ -78,7 +78,7 @@ contract DualAuction is
      * @notice Ensures that the auction has been settled
      */
     modifier onlyAuctionSettled() {
-        if (!settled) revert AuctionNotSettled();
+        if (!settled) revert AuctionHasNotSettled();
         _;
     }
 
@@ -98,7 +98,7 @@ contract DualAuction is
         if (minPrice() >= maxPrice()) revert InvalidPrice();
         if (maxPrice() > MAXIMUM_ALLOWED_PRICE) revert InvalidPrice();
         if ((maxPrice() - minPrice()) % tickWidth() != 0) revert InvalidPrice();
-        if (endDate() <= block.timestamp) revert AuctionEnded();
+        if (endDate() <= block.timestamp) revert AuctionHasEnded();
         minAsk = type(uint256).max;
     }
 
@@ -158,7 +158,7 @@ contract DualAuction is
      * @inheritdoc IDualAuction
      */
     function settle() external onlyAuctionEnded returns (uint256) {
-        if (settled) revert AuctionSettled();
+        if (settled) revert AuctionHasSettled();
         settled = true;
 
         uint256 currentBid = maxBid;
