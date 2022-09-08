@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.10;
 
+import {IAuctionFactory} from "../../interfaces/IAuctionFactory.sol";
 import {IDualAuction} from "../../interfaces/IDualAuction.sol";
 import "forge-std/Vm.sol";
 
-contract MockEventEmitter is IDualAuction {
+contract MockEventEmitter is IDualAuction, IAuctionFactory {
     function maxBid() external view returns (uint256){
         return 0;
     }
