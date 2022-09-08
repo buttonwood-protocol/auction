@@ -26,6 +26,7 @@ contract DualAuctionFactory is IAuctionFactory {
      * @param maxPrice The maximum allowed price in terms of bidAsset
      * @param tickWidth The spacing between valid prices
      * @param endDate The timestamp at which the auction will end
+     * @return auction The address of the new auction
      */
     function createAuction(
         address bidAsset,
