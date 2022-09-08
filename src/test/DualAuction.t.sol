@@ -43,7 +43,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
     }
 
     function testInstantiationExactEndDateExpectAuctionEnded() public {
-        vm.expectRevert(abi.encodeWithSignature("AuctionEnded()"));
+        vm.expectRevert(abi.encodeWithSignature("AuctionHasEnded()"));
         factory.createAuction(
             address(bidAsset),
             address(askAsset),
