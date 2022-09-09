@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.10;
 
+import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
 import {ERC20} from "solmate/tokens/ERC20.sol";
 import {ReentrancyGuardUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
@@ -295,8 +296,12 @@ contract DualAuction is
                 );
             } else {
                 // partially cleared
-                uint256 cleared = (shareAmount * askTokensClearedAtClearing) /
-                    totalSupply(price);
+                uint256 cleared = FixedPointMathLib.mulDivDown(
+                    shareAmount,
+                    askTokensClearedAtClearing,
+                    totalSupply(price)
+                );
+
                 return (
                     shareAmount - askToBid(cleared, _clearingPrice),
                     cleared

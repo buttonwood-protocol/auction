@@ -51,10 +51,7 @@ interface IDualAuction is IAuctionConversions {
     );
 
     /// @notice Event notifying about the settlement of an auction
-    event Settle(
-        address indexed actor,
-        uint256 clearingPrice
-    );
+    event Settle(address indexed actor, uint256 clearingPrice);
 
     /// @notice Event notifying about the redemption of share tokens
     event Redeem(
