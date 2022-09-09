@@ -156,12 +156,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
 
         user.approve(address(bidAsset), amount);
         vm.expectEmit(true, true, true, true, address(auction));
-        emit Bid(
-            address(user),
-            amount,
-            amount,
-            price
-        );
+        emit Bid(address(user), amount, amount, price);
         uint256 output = user.bid(amount, price);
         assertEq(output, amount);
 
@@ -338,12 +333,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
 
         user.approve(address(askAsset), amount);
         vm.expectEmit(true, true, true, true, address(auction));
-        emit Ask(
-            address(user),
-            amount,
-            amount,
-            price
-        );
+        emit Ask(address(user), amount, amount, price);
         uint256 output = user.ask(amount, price);
         assertEq(output, amount);
 
@@ -699,13 +689,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
 
         assertEq(askAsset.balanceOf(address(user)), 0);
         vm.expectEmit(true, true, false, false, address(auction));
-        emit Redeem(
-            address(user),
-            auction.toBidTokenId(price),
-            0,
-            0,
-            0
-        );
+        emit Redeem(address(user), auction.toBidTokenId(price), 0, 0, 0);
         (uint256 bidReceived, uint256 askReceived) = user.redeem(
             auction.toBidTokenId(price),
             bidShares
