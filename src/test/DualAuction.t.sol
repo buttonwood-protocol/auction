@@ -302,7 +302,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
 
         userDeflationary.approve(address(bidDeflationaryAsset), amount);
         uint256 output = userDeflationary.bid(amount, price);
-        assertEq(output, amount);
+        assertEq(output, expectedBidAmount);
 
         assertEq(
             auctionDeflationary.balanceOf(
@@ -475,7 +475,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
 
         userDeflationary.approve(address(askDeflationaryAsset), amount);
         uint256 output = userDeflationary.ask(amount, price);
-        assertEq(output, amount);
+        assertEq(output, expectedAskAmount);
 
         assertEq(
             auctionDeflationary.balanceOf(

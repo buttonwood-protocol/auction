@@ -126,7 +126,7 @@ contract DualAuction is
         uint256 bidAmount = postTransferBalance - preTransferBalance;
         _mint(msg.sender, toBidTokenId(price), bidAmount, "");
         emit Bid(msg.sender, amountIn, bidAmount, price);
-        return amountIn;
+        return bidAmount;
     }
 
     /**
@@ -152,7 +152,7 @@ contract DualAuction is
         uint256 askAmount = postTransferBalance - preTransferBalance;
         _mint(msg.sender, toAskTokenId(price), askAmount, "");
         emit Ask(msg.sender, amountIn, askAmount, price);
-        return amountIn;
+        return askAmount;
     }
 
     /**
