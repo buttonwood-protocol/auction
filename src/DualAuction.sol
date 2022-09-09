@@ -299,7 +299,7 @@ contract DualAuction is
                 uint256 cleared = FixedPointMathLib.mulDivDown(
                     shareAmount,
                     askTokensClearedAtClearing,
-                    totalSupply(price)
+                    totalSupply(tokenId)
                 );
 
                 return (
@@ -317,8 +317,11 @@ contract DualAuction is
                 return (askToBid(shareAmount, _clearingPrice), 0);
             } else {
                 // partially cleared
-                uint256 cleared = (shareAmount * bidTokensClearedAtClearing) /
-                    totalSupply(toAskTokenId(price));
+                uint256 cleared = FixedPointMathLib.mulDivDown(
+                    shareAmount,
+                    bidTokensClearedAtClearing,
+                    totalSupply(tokenId)
+                );
                 uint256 askValue = askToBid(shareAmount, _clearingPrice);
                 // sometimes due to floor rounding ask value is slightly too high
                 uint256 notCleared = askValue < cleared
