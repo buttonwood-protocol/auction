@@ -27,12 +27,13 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         factory = new DualAuctionFactory(address(implementation));
         initialTimestamp = block.timestamp;
 
-        vm.expectEmit(true, true, true, true, address(factory));
+        vm.expectEmit(true, true, true, false, address(factory));
         emit AuctionCreated(
             address(bidAsset),
             address(askAsset),
             initialTimestamp + 1 days,
-            address(this)
+            address(this),
+            address(0)
         );
         auction = DualAuction(
             factory.createAuction(
