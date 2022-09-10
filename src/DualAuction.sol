@@ -90,11 +90,11 @@ contract DualAuction is
         __ERC1155_init("");
         __ERC1155Supply_init();
         __ReentrancyGuard_init();
-        if (bidAsset() == askAsset()) revert InvalidAsset();
+        if (bidAsset() == askAsset()) revert MatchingAssets();
         if (
             address(bidAsset()) == address(0) ||
             address(askAsset()) == address(0)
-        ) revert InvalidAsset();
+        ) revert ZeroAddressAsset();
         if (minPrice() == 0) revert InvalidPrice();
         if (minPrice() >= maxPrice()) revert InvalidPrice();
         if (maxPrice() > MAXIMUM_ALLOWED_PRICE) revert InvalidPrice();

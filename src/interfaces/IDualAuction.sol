@@ -10,8 +10,11 @@ import {Clone} from "clones-with-immutable-args/Clone.sol";
 import {IAuctionConversions} from "./IAuctionConversions.sol";
 
 interface IDualAuction is IAuctionConversions {
-    /// @notice Zero address given for asset.
-    error InvalidAsset();
+    /// @notice Zero address given for asset
+    error ZeroAddressAsset();
+
+    /// @notice Matching buy/sell assets
+    error MatchingAssets();
 
     /// @notice Zero amount of asset given
     error ZeroAmount();
