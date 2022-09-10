@@ -113,7 +113,7 @@ contract DualAuction is
         nonReentrant
         returns (uint256)
     {
-        if (amountIn == 0) revert InvalidAmount();
+        if (amountIn == 0) revert ZeroAmount();
         if (price > maxBid) maxBid = price;
         uint256 preTransferBalance = bidAsset().balanceOf(address(this));
         SafeTransferLib.safeTransferFrom(
@@ -139,7 +139,7 @@ contract DualAuction is
         nonReentrant
         returns (uint256)
     {
-        if (amountIn == 0) revert InvalidAmount();
+        if (amountIn == 0) revert ZeroAmount();
         if (minAsk == 0 || price < minAsk) minAsk = price;
         uint256 preTransferBalance = askAsset().balanceOf(address(this));
         SafeTransferLib.safeTransferFrom(
@@ -231,7 +231,7 @@ contract DualAuction is
         nonReentrant
         returns (uint256 bidTokens, uint256 askTokens)
     {
-        if (amount == 0) revert InvalidAmount();
+        if (amount == 0) revert ZeroAmount();
         (bidTokens, askTokens) = shareValue(amount, tokenId);
         bool isBid = isBidTokenId(tokenId);
 
