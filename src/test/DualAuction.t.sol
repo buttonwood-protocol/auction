@@ -75,7 +75,10 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         assertEq(auction.askAssetDecimals(), 18);
     }
 
-    function testFailInstantiationInvalidBidAsset() public {
+    function testInstantiationZeroBidAsset() public {
+        // ToDo: Add error-check after price-refactoring
+//        vm.expectRevert(abi.encodeWithSignature("ZeroAddressAsset()"));
+        vm.expectRevert();
         factory.createAuction(
             address(0),
             address(askAsset),
@@ -86,7 +89,9 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         );
     }
 
-    function testFailInstantiationInvalidAskAsset() public {
+    function testFailInstantiationZeroAskAsset() public {
+        // ToDo: Add error-check after price-refactoring
+//        vm.expectRevert(abi.encodeWithSignature("ZeroAddressAsset()"));
         factory.createAuction(
             address(bidAsset),
             address(0),
@@ -97,7 +102,8 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         );
     }
 
-    function testFailInstantiationInvalidAssets() public {
+    function testInstantiationMatchingAssets() public {
+        vm.expectRevert(abi.encodeWithSignature("MatchingAssets()"));
         factory.createAuction(
             address(bidAsset),
             address(bidAsset),
