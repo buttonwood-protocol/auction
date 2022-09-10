@@ -208,7 +208,8 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         assertEq(auction.maxBid(), price * 3);
     }
 
-    function testFailBidZeroAmount() public {
+    function testBidZeroAmount() public {
+        vm.expectRevert(abi.encodeWithSignature("ZeroAmount()"));
         user.bid(0, 10**16);
     }
 
@@ -381,7 +382,8 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         assertEq(auction.minAsk(), 10**16);
     }
 
-    function testFailAskZeroAmount() public {
+    function testAskZeroAmount() public {
+        vm.expectRevert(abi.encodeWithSignature("ZeroAmount()"));
         user.ask(0, 10**16);
     }
 
@@ -845,6 +847,8 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         assertEq(askAsset.balanceOf(address(auction)), 0);
     }
 
+    // vm.expectRevert() can't catch ZeroAmount() error due to forge limitations on functions that return structs
+    // Defaulting to just `testFail`
     function testFailRedeemZero() public {
         uint256 amount = 10**18;
         uint256 price = 10**18;

@@ -13,8 +13,8 @@ interface IDualAuction is IAuctionConversions {
     /// @notice Zero address given for asset.
     error InvalidAsset();
 
-    /// @notice Invalid amount of asset given
-    error InvalidAmount();
+    /// @notice Zero amount of asset given
+    error ZeroAmount();
 
     /// @notice The end date has not yet passed
     error AuctionIsActive();
