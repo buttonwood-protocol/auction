@@ -324,7 +324,7 @@ contract DualAuction is
                 );
                 uint256 askValue = askToBid(shareAmount, _clearingPrice);
                 // sometimes due to floor rounding ask value is slightly too high
-                uint256 notCleared = askValue < cleared
+                uint256 notCleared = askValue <= cleared
                     ? 0
                     : bidToAsk(askValue - cleared, _clearingPrice);
                 return (cleared, notCleared);
