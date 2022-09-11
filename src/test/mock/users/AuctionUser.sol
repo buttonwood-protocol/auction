@@ -8,7 +8,7 @@ contract AuctionUser is ERC1155Holder {
     IDualAuction private auction;
 
     constructor(IDualAuction _auction) {
-        auction = IDualAuction(_auction);
+        auction = _auction;
     }
 
     function approve(address asset, uint256 amount) external {
