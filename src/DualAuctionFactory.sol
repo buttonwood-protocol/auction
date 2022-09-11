@@ -27,6 +27,7 @@ contract DualAuctionFactory is IAuctionFactory {
      * @param maxPrice The maximum allowed price in terms of bidAsset
      * @param tickWidth The spacing between valid prices
      * @param endDate The timestamp at which the auction will end
+     * @return auction The address of the new auction
      */
     function createAuction(
         address bidAsset,
@@ -50,7 +51,7 @@ contract DualAuctionFactory is IAuctionFactory {
 
         clone.initialize();
 
-        emit AuctionCreated(bidAsset, askAsset, endDate, msg.sender);
+        emit AuctionCreated(bidAsset, askAsset, endDate, msg.sender, address(clone));
         return address(clone);
     }
 }

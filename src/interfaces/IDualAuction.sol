@@ -10,53 +10,56 @@ import {Clone} from "clones-with-immutable-args/Clone.sol";
 import {IAuctionConversions} from "./IAuctionConversions.sol";
 
 interface IDualAuction is IAuctionConversions {
-    /// @notice Zero address given for asset.
-    error InvalidAsset();
+    /// @notice Zero address given for asset
+    error ZeroAddressAsset();
 
-    /// @notice Invalid amount of asset given
-    error InvalidAmount();
+    /// @notice Matching buy/sell assets
+    error MatchingAssets();
+
+    /// @notice Zero amount of asset given
+    error ZeroAmount();
 
     /// @notice The end date has not yet passed
-    error AuctionActive();
+    error AuctionIsActive();
 
     /// @notice The end date has passed
-    error AuctionEnded();
+    error AuctionHasEnded();
 
     /// @notice The auction has not been settled
-    error AuctionNotSettled();
+    error AuctionHasNotSettled();
 
     /// @notice The auction has already been settled
-    error AuctionSettled();
+    error AuctionHasSettled();
 
     /// @notice The auction ended with no clearing price
     error NoClearingPrice();
 
     /// @notice The settlement somehow ended with cleared tokens but no clearing price
-    error SettleFailed();
+    error SettleHasFailed();
 
     /// @notice Event declaring that a bid was made
     event Bid(
-        address actor,
+        address indexed actor,
         uint256 amountIn,
         uint256 amountOut,
-        uint256 price
+        uint256 indexed price
     );
 
     /// @notice Event declaring that an ask was made
     event Ask(
-        address actor,
+        address indexed actor,
         uint256 amountIn,
         uint256 amountOut,
-        uint256 price
+        uint256 indexed price
     );
 
     /// @notice Event notifying about the settlement of an auction
-    event Settle(address actor, uint256 clearingPrice);
+    event Settle(address indexed actor, uint256 clearingPrice);
 
     /// @notice Event notifying about the redemption of share tokens
     event Redeem(
-        address actor,
-        uint256 tokenId,
+        address indexed actor,
+        uint256 indexed tokenId,
         uint256 shareAmount,
         uint256 bidValue,
         uint256 askValue

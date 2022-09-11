@@ -6,10 +6,11 @@ pragma solidity 0.8.10;
  */
 interface IAuctionFactory {
     event AuctionCreated(
-        address bidAsset,
-        address askAsset,
+        address indexed bidAsset,
+        address indexed askAsset,
         uint256 endDate,
-        address creator
+        address indexed creator,
+        address newAuctionAddress
     );
 
     /// @notice Some parameters are invalid

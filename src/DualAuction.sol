@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.10;
 
+import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
 import {ERC20} from "solmate/tokens/ERC20.sol";
 import {ReentrancyGuardUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
@@ -62,7 +63,7 @@ contract DualAuction is
      * @notice Ensures that the auction is active
      */
     modifier onlyAuctionActive() {
-        if (block.timestamp >= endDate()) revert AuctionEnded();
+        if (block.timestamp >= endDate()) revert AuctionHasEnded();
         _;
     }
 
@@ -70,7 +71,7 @@ contract DualAuction is
      * @notice Ensures that the auction is finalized
      */
     modifier onlyAuctionEnded() {
-        if (block.timestamp < endDate()) revert AuctionActive();
+        if (block.timestamp < endDate()) revert AuctionIsActive();
         _;
     }
 
@@ -78,7 +79,7 @@ contract DualAuction is
      * @notice Ensures that the auction has been settled
      */
     modifier onlyAuctionSettled() {
-        if (!settled) revert AuctionNotSettled();
+        if (!settled) revert AuctionHasNotSettled();
         _;
     }
 
@@ -89,16 +90,16 @@ contract DualAuction is
         __ERC1155_init("");
         __ERC1155Supply_init();
         __ReentrancyGuard_init();
-        if (bidAsset() == askAsset()) revert InvalidAsset();
+        if (bidAsset() == askAsset()) revert MatchingAssets();
         if (
             address(bidAsset()) == address(0) ||
             address(askAsset()) == address(0)
-        ) revert InvalidAsset();
+        ) revert ZeroAddressAsset();
         if (minPrice() == 0) revert InvalidPrice();
         if (minPrice() >= maxPrice()) revert InvalidPrice();
         if (maxPrice() > MAXIMUM_ALLOWED_PRICE) revert InvalidPrice();
         if ((maxPrice() - minPrice()) % tickWidth() != 0) revert InvalidPrice();
-        if (endDate() <= block.timestamp) revert AuctionEnded();
+        if (endDate() <= block.timestamp) revert AuctionHasEnded();
         minAsk = type(uint256).max;
     }
 
@@ -112,7 +113,7 @@ contract DualAuction is
         nonReentrant
         returns (uint256)
     {
-        if (amountIn == 0) revert InvalidAmount();
+        if (amountIn == 0) revert ZeroAmount();
         if (price > maxBid) maxBid = price;
         uint256 preTransferBalance = bidAsset().balanceOf(address(this));
         SafeTransferLib.safeTransferFrom(
@@ -125,7 +126,7 @@ contract DualAuction is
         uint256 bidAmount = postTransferBalance - preTransferBalance;
         _mint(msg.sender, toBidTokenId(price), bidAmount, "");
         emit Bid(msg.sender, amountIn, bidAmount, price);
-        return amountIn;
+        return bidAmount;
     }
 
     /**
@@ -138,7 +139,7 @@ contract DualAuction is
         nonReentrant
         returns (uint256)
     {
-        if (amountIn == 0) revert InvalidAmount();
+        if (amountIn == 0) revert ZeroAmount();
         if (minAsk == 0 || price < minAsk) minAsk = price;
         uint256 preTransferBalance = askAsset().balanceOf(address(this));
         SafeTransferLib.safeTransferFrom(
@@ -151,21 +152,24 @@ contract DualAuction is
         uint256 askAmount = postTransferBalance - preTransferBalance;
         _mint(msg.sender, toAskTokenId(price), askAmount, "");
         emit Ask(msg.sender, amountIn, askAmount, price);
-        return amountIn;
+        return askAmount;
     }
 
     /**
      * @inheritdoc IDualAuction
      */
     function settle() external onlyAuctionEnded returns (uint256) {
-        if (settled) revert AuctionSettled();
+        if (settled) revert AuctionHasSettled();
         settled = true;
 
         uint256 currentBid = maxBid;
         uint256 currentAsk = minAsk;
 
         // no overlap, nothing will be cleared
-        if (currentBid < currentAsk) return 0;
+        if (currentBid < currentAsk) {
+            emit Settle(msg.sender, 0);
+            return 0;
+        }
 
         uint256 lowBid = currentBid;
         uint256 highAsk = currentAsk;
@@ -227,7 +231,7 @@ contract DualAuction is
         nonReentrant
         returns (uint256 bidTokens, uint256 askTokens)
     {
-        if (amount == 0) revert InvalidAmount();
+        if (amount == 0) revert ZeroAmount();
         (bidTokens, askTokens) = shareValue(amount, tokenId);
         bool isBid = isBidTokenId(tokenId);
 
@@ -292,8 +296,12 @@ contract DualAuction is
                 );
             } else {
                 // partially cleared
-                uint256 cleared = (shareAmount * askTokensClearedAtClearing) /
-                    totalSupply(price);
+                uint256 cleared = FixedPointMathLib.mulDivDown(
+                    shareAmount,
+                    askTokensClearedAtClearing,
+                    totalSupply(tokenId)
+                );
+
                 return (
                     shareAmount - askToBid(cleared, _clearingPrice),
                     cleared
@@ -309,8 +317,11 @@ contract DualAuction is
                 return (askToBid(shareAmount, _clearingPrice), 0);
             } else {
                 // partially cleared
-                uint256 cleared = (shareAmount * bidTokensClearedAtClearing) /
-                    totalSupply(toAskTokenId(price));
+                uint256 cleared = FixedPointMathLib.mulDivDown(
+                    shareAmount,
+                    bidTokensClearedAtClearing,
+                    totalSupply(tokenId)
+                );
                 uint256 askValue = askToBid(shareAmount, _clearingPrice);
                 // sometimes due to floor rounding ask value is slightly too high
                 uint256 notCleared = askValue < cleared
