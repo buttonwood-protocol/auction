@@ -51,7 +51,7 @@ contract DualAuctionFactory is IAuctionFactory {
 
         clone.initialize();
 
-        emit AuctionCreated(bidAsset, askAsset, endDate, msg.sender);
+        emit AuctionCreated(bidAsset, askAsset, endDate, msg.sender, address(clone));
         return clone;
     }
 }

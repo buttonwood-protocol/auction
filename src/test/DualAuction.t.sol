@@ -27,6 +27,14 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         factory = new DualAuctionFactory(address(implementation));
         initialTimestamp = block.timestamp;
 
+        vm.expectEmit(true, true, true, false, address(factory));
+        emit AuctionCreated(
+            address(bidAsset),
+            address(askAsset),
+            initialTimestamp + 1 days,
+            address(this),
+            address(0)
+        );
         auction = DualAuction(
             address(
                 factory.createAuction(
@@ -68,7 +76,10 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         assertEq(auction.askAssetDecimals(), 18);
     }
 
-    function testFailInstantiationInvalidBidAsset() public {
+    function testInstantiationZeroBidAsset() public {
+        // ToDo: Add error-check after price-refactoring
+//        vm.expectRevert(abi.encodeWithSignature("ZeroAddressAsset()"));
+        vm.expectRevert();
         factory.createAuction(
             address(0),
             address(askAsset),
@@ -79,7 +90,9 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         );
     }
 
-    function testFailInstantiationInvalidAskAsset() public {
+    function testFailInstantiationZeroAskAsset() public {
+        // ToDo: Add error-check after price-refactoring
+//        vm.expectRevert(abi.encodeWithSignature("ZeroAddressAsset()"));
         factory.createAuction(
             address(bidAsset),
             address(0),
@@ -90,7 +103,8 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         );
     }
 
-    function testFailInstantiationInvalidAssets() public {
+    function testInstantiationMatchingAssets() public {
+        vm.expectRevert(abi.encodeWithSignature("MatchingAssets()"));
         factory.createAuction(
             address(bidAsset),
             address(bidAsset),
@@ -149,12 +163,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
 
         user.approve(address(bidAsset), amount);
         vm.expectEmit(true, true, true, true, address(auction));
-        emit Bid(
-            address(user),
-            amount,
-            amount,
-            price
-        );
+        emit Bid(address(user), amount, amount, price);
         uint256 output = user.bid(amount, price);
         assertEq(output, amount);
 
@@ -205,7 +214,8 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         assertEq(auction.maxBid(), price * 3);
     }
 
-    function testFailBidZeroAmount() public {
+    function testBidZeroAmount() public {
+        vm.expectRevert(abi.encodeWithSignature("ZeroAmount()"));
         user.bid(0, 10**16);
     }
 
@@ -303,7 +313,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
 
         userDeflationary.approve(address(bidDeflationaryAsset), amount);
         uint256 output = userDeflationary.bid(amount, price);
-        assertEq(output, amount);
+        assertEq(output, expectedBidAmount);
 
         assertEq(
             auctionDeflationary.balanceOf(
@@ -334,12 +344,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
 
         user.approve(address(askAsset), amount);
         vm.expectEmit(true, true, true, true, address(auction));
-        emit Ask(
-            address(user),
-            amount,
-            amount,
-            price
-        );
+        emit Ask(address(user), amount, amount, price);
         uint256 output = user.ask(amount, price);
         assertEq(output, amount);
 
@@ -386,7 +391,8 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         assertEq(auction.minAsk(), 10**16);
     }
 
-    function testFailAskZeroAmount() public {
+    function testAskZeroAmount() public {
+        vm.expectRevert(abi.encodeWithSignature("ZeroAmount()"));
         user.ask(0, 10**16);
     }
 
@@ -485,7 +491,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
 
         userDeflationary.approve(address(askDeflationaryAsset), amount);
         uint256 output = userDeflationary.ask(amount, price);
-        assertEq(output, amount);
+        assertEq(output, expectedAskAmount);
 
         assertEq(
             auctionDeflationary.balanceOf(
@@ -699,13 +705,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
 
         assertEq(askAsset.balanceOf(address(user)), 0);
         vm.expectEmit(true, true, false, false, address(auction));
-        emit Redeem(
-            address(user),
-            auction.toBidTokenId(price),
-            0,
-            0,
-            0
-        );
+        emit Redeem(address(user), auction.toBidTokenId(price), 0, 0, 0);
         (uint256 bidReceived, uint256 askReceived) = user.redeem(
             auction.toBidTokenId(price),
             bidShares
@@ -860,6 +860,8 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         assertEq(askAsset.balanceOf(address(auction)), 0);
     }
 
+    // vm.expectRevert() can't catch ZeroAmount() error due to forge limitations on functions that return structs
+    // Defaulting to just `testFail`
     function testFailRedeemZero() public {
         uint256 amount = 10**18;
         uint256 price = 10**18;

@@ -10,11 +10,14 @@ import {Clone} from "clones-with-immutable-args/Clone.sol";
 import {IAuctionConversions} from "./IAuctionConversions.sol";
 
 interface IDualAuction is IAuctionConversions {
-    /// @notice Zero address given for asset.
-    error InvalidAsset();
+    /// @notice Zero address given for asset
+    error ZeroAddressAsset();
 
-    /// @notice Invalid amount of asset given
-    error InvalidAmount();
+    /// @notice Matching buy/sell assets
+    error MatchingAssets();
+
+    /// @notice Zero amount of asset given
+    error ZeroAmount();
 
     /// @notice The end date has not yet passed
     error AuctionIsActive();
@@ -51,10 +54,7 @@ interface IDualAuction is IAuctionConversions {
     );
 
     /// @notice Event notifying about the settlement of an auction
-    event Settle(
-        address indexed actor,
-        uint256 clearingPrice
-    );
+    event Settle(address indexed actor, uint256 clearingPrice);
 
     /// @notice Event notifying about the redemption of share tokens
     event Redeem(
