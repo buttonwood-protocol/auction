@@ -5,6 +5,7 @@ import {ClonesWithImmutableArgs} from "clones-with-immutable-args/ClonesWithImmu
 import {IERC20MetadataUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import {IERC20Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 import {DualAuction} from "./DualAuction.sol";
+import {IDualAuction} from "./interfaces/IDualAuction.sol";
 import {IAuctionFactory} from "./interfaces/IAuctionFactory.sol";
 
 contract DualAuctionFactory is IAuctionFactory {
@@ -33,7 +34,7 @@ contract DualAuctionFactory is IAuctionFactory {
         uint256 maxPrice,
         uint256 tickWidth,
         uint256 endDate
-    ) public returns (address) {
+    ) public returns (IDualAuction) {
         bytes memory data = abi.encodePacked(
             bidAsset,
             askAsset,
@@ -49,6 +50,6 @@ contract DualAuctionFactory is IAuctionFactory {
         clone.initialize();
 
         emit AuctionCreated(bidAsset, askAsset, endDate, msg.sender, address(clone));
-        return address(clone);
+        return clone;
     }
 }

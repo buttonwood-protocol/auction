@@ -36,29 +36,29 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
             address(0)
         );
         auction = DualAuction(
-            factory.createAuction(
-                address(bidAsset),
-                address(askAsset),
-                10**16,
-                10**18,
-                10**16,
-                initialTimestamp + 1 days
+            address(
+                factory.createAuction(
+                    address(bidAsset),
+                    address(askAsset),
+                    10**16,
+                    10**18,
+                    10**16,
+                    initialTimestamp + 1 days
+                )
             )
         );
-        user = new AuctionUser(address(auction));
+        user = new AuctionUser(auction);
     }
 
     function testInstantiationExactEndDateExpectAuctionEnded() public {
         vm.expectRevert(abi.encodeWithSignature("AuctionHasEnded()"));
-        DualAuction(
-            factory.createAuction(
-                address(bidAsset),
-                address(askAsset),
-                10**16,
-                10**18,
-                10**16,
-                initialTimestamp
-            )
+        factory.createAuction(
+            address(bidAsset),
+            address(askAsset),
+            10**16,
+            10**18,
+            10**16,
+            initialTimestamp
         );
     }
 
@@ -254,16 +254,19 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
 
     function testFailBidPriceTooLow(uint128 amount) public {
         DualAuction newAuction = DualAuction(
-            factory.createAuction(
-                address(bidAsset),
-                address(askAsset),
-                2 * 10**16,
-                10**18,
-                10**16,
-                initialTimestamp + 1 days
+            address(
+                factory.createAuction(
+                    address(bidAsset),
+                    address(askAsset),
+                    2 * 10**16,
+                    10**18,
+                    10**16,
+                    initialTimestamp + 1 days
+                )
             )
         );
-        AuctionUser newUser = new AuctionUser(address(newAuction));
+
+        AuctionUser newUser = new AuctionUser(newAuction);
 
         bidAsset.mint(address(newUser), amount);
         newUser.approve(address(bidAsset), amount);
@@ -280,18 +283,18 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         );
 
         DualAuction auctionDeflationary = DualAuction(
-            factory.createAuction(
-                address(bidDeflationaryAsset),
-                address(askAsset),
-                10**16,
-                10**18,
-                10**16,
-                initialTimestamp + 1 days
+            address(
+                factory.createAuction(
+                    address(bidDeflationaryAsset),
+                    address(askAsset),
+                    10**16,
+                    10**18,
+                    10**16,
+                    initialTimestamp + 1 days
+                )
             )
         );
-        AuctionUser userDeflationary = new AuctionUser(
-            address(auctionDeflationary)
-        );
+        AuctionUser userDeflationary = new AuctionUser(auctionDeflationary);
 
         // 1 for 1
         uint256 amount = 10**18;
@@ -428,16 +431,19 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
 
     function testFailAskPriceTooLow(uint128 amount) public {
         DualAuction newAuction = DualAuction(
-            factory.createAuction(
-                address(bidAsset),
-                address(askAsset),
-                2 * 10**16,
-                10**18,
-                10**16,
-                initialTimestamp + 1 days
+            address(
+                factory.createAuction(
+                    address(bidAsset),
+                    address(askAsset),
+                    2 * 10**16,
+                    10**18,
+                    10**16,
+                    initialTimestamp + 1 days
+                )
             )
         );
-        AuctionUser newUser = new AuctionUser(address(newAuction));
+
+        AuctionUser newUser = new AuctionUser(newAuction);
 
         askAsset.mint(address(newUser), amount);
         newUser.approve(address(askAsset), amount);
@@ -454,18 +460,19 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         );
 
         DualAuction auctionDeflationary = DualAuction(
-            factory.createAuction(
-                address(bidAsset),
-                address(askDeflationaryAsset),
-                10**16,
-                10**18,
-                10**16,
-                initialTimestamp + 1 days
+            address(
+                factory.createAuction(
+                    address(bidAsset),
+                    address(askDeflationaryAsset),
+                    10**16,
+                    10**18,
+                    10**16,
+                    initialTimestamp + 1 days
+                )
             )
         );
-        AuctionUser userDeflationary = new AuctionUser(
-            address(auctionDeflationary)
-        );
+
+        AuctionUser userDeflationary = new AuctionUser(auctionDeflationary);
 
         // 1 token at 1:1 price
         uint256 amount = 10**18;
@@ -753,22 +760,22 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
 
     function testRedeemTwoBidsAndAsks() public {
         uint256 amount = 10**18;
-        AuctionUser lowBidder = new AuctionUser(address(auction));
+        AuctionUser lowBidder = new AuctionUser(auction);
         bidAsset.mint(address(lowBidder), amount);
         lowBidder.approve(address(bidAsset), amount);
         uint256 lowBidderShares = lowBidder.bid(amount, 10**16 * 20);
 
-        AuctionUser highBidder = new AuctionUser(address(auction));
+        AuctionUser highBidder = new AuctionUser(auction);
         bidAsset.mint(address(highBidder), amount);
         highBidder.approve(address(bidAsset), amount);
         uint256 highBidderShares = highBidder.bid(amount, 10**16 * 60);
 
-        AuctionUser lowAsker = new AuctionUser(address(auction));
+        AuctionUser lowAsker = new AuctionUser(auction);
         askAsset.mint(address(lowAsker), amount);
         lowAsker.approve(address(askAsset), amount);
         uint256 lowAskerShares = lowAsker.ask(amount, 10**16 * 40);
 
-        AuctionUser highAsker = new AuctionUser(address(auction));
+        AuctionUser highAsker = new AuctionUser(auction);
         askAsset.mint(address(highAsker), amount);
         highAsker.approve(address(askAsset), amount);
         uint256 highAskerShares = highAsker.ask(amount, 10**16 * 70);
@@ -921,17 +928,17 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
     // found during fuzzing of random bids and asks
     function testDoubleBidCounterexample() public {
         uint256 amount = 10**18;
-        AuctionUser bidder = new AuctionUser(address(auction));
+        AuctionUser bidder = new AuctionUser(auction);
         bidAsset.mint(address(bidder), amount);
         bidder.approve(address(bidAsset), amount);
         uint256 bidderShares = bidder.bid(amount, 10**16 * 60);
 
-        AuctionUser otherBidder = new AuctionUser(address(auction));
+        AuctionUser otherBidder = new AuctionUser(auction);
         bidAsset.mint(address(otherBidder), amount);
         otherBidder.approve(address(bidAsset), amount);
         uint256 otherBidderShares = otherBidder.bid(amount, 10**16 * 60);
 
-        AuctionUser asker = new AuctionUser(address(auction));
+        AuctionUser asker = new AuctionUser(auction);
         askAsset.mint(address(asker), amount);
         asker.approve(address(askAsset), amount);
         uint256 askerShares = asker.ask(amount, 10**16 * 40);
@@ -970,22 +977,22 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
     // found during fuzzing of random bids and asks
     function testOversubscriptionCounterexample() public {
         uint256 amount = 10**18;
-        AuctionUser bidder = new AuctionUser(address(auction));
+        AuctionUser bidder = new AuctionUser(auction);
         bidAsset.mint(address(bidder), amount);
         bidder.approve(address(bidAsset), amount);
         uint256 bidderShares = bidder.bid(amount, 10**16 * 50);
 
-        AuctionUser lowAsker = new AuctionUser(address(auction));
+        AuctionUser lowAsker = new AuctionUser(auction);
         askAsset.mint(address(lowAsker), amount);
         lowAsker.approve(address(askAsset), amount);
         uint256 lowAskerShares = lowAsker.ask(amount, 10**16 * 20);
 
-        AuctionUser highAsker = new AuctionUser(address(auction));
+        AuctionUser highAsker = new AuctionUser(auction);
         askAsset.mint(address(highAsker), amount);
         highAsker.approve(address(askAsset), amount);
         uint256 highAskerShares = highAsker.ask(amount, 10**16 * 70);
 
-        AuctionUser midAsker = new AuctionUser(address(auction));
+        AuctionUser midAsker = new AuctionUser(auction);
         askAsset.mint(address(midAsker), amount);
         midAsker.approve(address(askAsset), amount);
         uint256 midAskerShares = midAsker.ask(amount, 10**16 * 30);
