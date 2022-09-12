@@ -164,6 +164,7 @@ contract DualAuction is
 
         uint256 currentBid = maxBid;
         uint256 currentAsk = minAsk;
+        uint256 _tickWidth = tickWidth();
 
         // no overlap, nothing will be cleared
         if (currentBid < currentAsk) {
@@ -208,8 +209,8 @@ contract DualAuction is
                 lowBid = currentBid;
             }
 
-            if (currentAskTokens == 0) currentAsk += tickWidth();
-            if (currentDesiredAskTokens == 0) currentBid -= tickWidth();
+            if (currentAskTokens == 0) currentAsk += _tickWidth;
+            if (currentDesiredAskTokens == 0) currentBid -= _tickWidth;
         }
 
         clearingBidPrice = lowBid;
