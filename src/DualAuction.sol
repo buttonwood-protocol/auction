@@ -258,13 +258,7 @@ contract DualAuction is
      * @inheritdoc IDualAuction
      */
     function clearingPrice() public view override returns (uint256) {
-        uint256 _clearingBid = clearingBidPrice;
-        uint256 _clearingAsk = clearingAskPrice;
-        if (_clearingBid == _clearingAsk) {
-            return _clearingBid;
-        } else {
-            return (_clearingBid + _clearingAsk) / 2;
-        }
+        return (clearingBidPrice + clearingAskPrice) / 2;
     }
 
     /**
