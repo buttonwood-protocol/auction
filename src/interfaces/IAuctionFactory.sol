@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.10;
 
+import {IDualAuction} from "./IDualAuction.sol";
+
 /**
  * @notice Interface for Auction factory contracts
  */
@@ -32,5 +34,5 @@ interface IAuctionFactory {
         uint256 maxPrice,
         uint256 tickWidth,
         uint256 endDate
-    ) external returns (address);
+    ) external returns (IDualAuction);
 }
