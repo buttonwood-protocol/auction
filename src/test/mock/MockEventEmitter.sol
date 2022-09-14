@@ -37,4 +37,15 @@ contract MockEventEmitter is IDualAuction, IAuctionFactory {
     function redeem(uint256 tokenId, uint256 amount) external returns (uint256, uint256){
         return (0,0);
     }
+
+    function createAuction(
+        address bidAsset,
+        address askAsset,
+        uint256 minPrice,
+        uint256 maxPrice,
+        uint256 tickWidth,
+        uint256 endDate
+    ) external returns (IDualAuction) {
+        return IDualAuction(address(0));
+    }
 }
