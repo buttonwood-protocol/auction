@@ -32,6 +32,7 @@ contract AuctionImmutableArgs is Clone {
 
     /**
      * @notice The minimum allowed price
+     * @dev prices are denominated as the numerator of the bidAsset/askAsset fraction. priceDenominator is the denominator.
      * @dev using ClonesWithImmutableArgs pattern here to save gas
      * @dev https://github.com/wighawag/clones-with-immutable-args
      * @return The minimum allowed price
@@ -42,9 +43,7 @@ contract AuctionImmutableArgs is Clone {
 
     /**
      * @notice The maximum allowed price
-     * @dev prices are denominated in terms of bidAsset per askAsset
-     *  i.e. if bidAsset is USDC and askAsset is ETH, price might be
-     *  3000000000 for 3000 USDC per ETH
+     * @dev prices are denominated as the numerator of the bidAsset/askAsset fraction. priceDenominator is the denominator.
      * @dev using ClonesWithImmutableArgs pattern here to save gas
      * @dev https://github.com/wighawag/clones-with-immutable-args
      * @return The maximum allowed price
@@ -55,6 +54,7 @@ contract AuctionImmutableArgs is Clone {
 
     /**
      * @notice The width of ticks i.e. allowed prices
+     * @dev prices are denominated as the numerator of the bidAsset/askAsset fraction. priceDenominator is the denominator.
      * @dev using ClonesWithImmutableArgs pattern here to save gas
      * @dev https://github.com/wighawag/clones-with-immutable-args
      * @return The width of ticks
@@ -64,7 +64,7 @@ contract AuctionImmutableArgs is Clone {
     }
 
     /**
-     * @notice The underlying denominator used to calculate all the prices
+     * @notice The underlying denominator used to calculate all the price fractions
      * @dev using ClonesWithImmutableArgs pattern here to save gas
      * @dev https://github.com/wighawag/clones-with-immutable-args
      * @return The number of decimals for the bid asset
