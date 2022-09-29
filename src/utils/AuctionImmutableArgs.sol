@@ -64,32 +64,22 @@ contract AuctionImmutableArgs is Clone {
     }
 
     /**
+     * @notice The underlying denominator used to calculate all the prices
+     * @dev using ClonesWithImmutableArgs pattern here to save gas
+     * @dev https://github.com/wighawag/clones-with-immutable-args
+     * @return The number of decimals for the bid asset
+     */
+    function priceDenominator() public pure returns (uint256) {
+        return _getArgUint256(136);
+    }
+
+    /**
      * @notice The timestamp at which the auction will end
      * @dev using ClonesWithImmutableArgs pattern here to save gas
      * @dev https://github.com/wighawag/clones-with-immutable-args
      * @return The timestamp at which the auction will end
      */
     function endDate() public pure returns (uint256) {
-        return _getArgUint256(136);
-    }
-
-    /**
-     * @notice The number of dceimals for the bid asset
-     * @dev using ClonesWithImmutableArgs pattern here to save gas
-     * @dev https://github.com/wighawag/clones-with-immutable-args
-     * @return The number of decimals for the bid asset
-     */
-    function bidAssetDecimals() public pure returns (uint256) {
-        return _getArgUint8(168);
-    }
-
-    /**
-     * @notice The number of decimals for the ask asset
-     * @dev using ClonesWithImmutableArgs pattern here to save gas
-     * @dev https://github.com/wighawag/clones-with-immutable-args
-     * @return The number of decimals for the ask asset
-     */
-    function askAssetDecimals() public pure returns (uint256) {
-        return _getArgUint8(169);
+        return _getArgUint256(168);
     }
 }

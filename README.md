@@ -16,12 +16,31 @@ double-auction, modified to make sense in a high-latency, high-transaction cost,
 The auction is instantiated with the following parameters:
 - `bidAsset`: The asset which is being used to purchase
 - `askAsset`: The asset which is being purchased
-- `minPrice`: The lower bound for allowed prices
-- `maxPrice`: The upper bound for allowed prices
-- `tickWidth`: The spacing between allowed prices
+- `minPrice`: The numerator of the lower bound for allowed prices
+- `maxPrice`: The numerator of the upper bound for allowed prices
+- `tickWidth`: The numerator of the spacing between allowed prices
+- `priceDenominator`: The common denominator for all the underlying prices
 - `endDate`: The UNIX timestamp (in seconds) at which the auction ends
 
-Note that prices are denominated in `bid asset per askAsset`, adjusted for decimals. For example, if `askAsset` is USDC (6 decimals) and `bidAsset` is ETH (18 decimals), a price of `$2000 / ETH` would be represented as 2_000_000_000 (2000 USDC).
+Note that prices are denominated in `bid asset per askAsset`, adjusted for granularity.
+All prices are represented as fractions, with a common denominator being `priceDenominator`:
+- The underlying minimum price is `minPrice/priceDenominator`
+- The underlying maximum price is `maxPrice/priceDenominator`
+- The underlying tick width is `tickWidth/priceDenominator`.
+
+For example, if `askAsset` is USDC (6 decimals) and `bidAsset` is WETH (18 decimals), a price of `$2000 / ETH` can be represented in a number of ways.
+- The clearest representation is `2000 * (10**6)` USDC base units for each 1 WETH (or `10**18` WETH base units)
+    - Price: `(2000 * (10**6))`, PriceDenominator: `(10**18)`
+- The above fraction could also be adjusted for more granularity or less by multiplying/dividing the denominator by powers of 10. The below fractions are equivalent price representations:
+    - Price: `2`, PriceDenominator: `(10**9)` (if you want price to move in larger increments)
+    - Price: `(2000 * (10**9))`, PriceDenominator: `(10**21)` (if you want price to move in smaller increments)
+
+There's a trade-off with the granularity of the price.
+- The larger you make `priceDenominator`, the larger scale you'll need to denote prices. This reduces your ability to trade since
+    - Converting between `bidTokens` to `askTokens` requires multiplying by `priceDenominator` and dividing by `price`. Hence, if you make `bidTokens * priceDenominator` too large, your math will overflow and revert.
+    - Converting between `askTokens` to `bidTokens` requires multiplying by `price` and dividing by `priceDenominator`. Hence, if you make `askTokens * price` too large, your math will overflow and revert.
+ 
+One recommendation is to keep `priceDenominator` as a power of 10 for simple UI integrations. 
 
 ## Making bids and asks
 
