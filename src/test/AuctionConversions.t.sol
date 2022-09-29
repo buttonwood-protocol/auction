@@ -118,9 +118,30 @@ contract AuctionConversionsTest is DSTestPlus {
         auctionConversions.bidToAsk(bidTokens, price);
     }
 
+    // AskToBid does not have same zeroPrice condition
     function testCannotBidToAskZeroPrice(uint256 bidTokens) public {
         uint256 price = uint256(0);
         vm.expectRevert(abi.encodeWithSignature("InvalidPrice()"));
         auctionConversions.bidToAsk(bidTokens, price);
+    }
+
+    function testAskToBid(uint256 askTokens, uint256 price) public {
+        // Ensuring that the overflow won't happen in the mulDivDown
+        vm.assume(price > uint128(0));
+        vm.assume(type(uint256).max / price >= askTokens);
+        assertEq(
+            auctionConversions.askToBid(askTokens, price),
+            (askTokens * price) / (10**18)
+        );
+    }
+
+    function testCannotAskToBidOverflow(uint256 askTokens, uint256 price)
+    public
+    {
+        vm.assume(price > uint128(0));
+        // Ensuring that the overflow will happen in the mulDivDown
+        vm.assume(type(uint256).max / price < askTokens);
+        vm.expectRevert();
+        auctionConversions.askToBid(askTokens, price);
     }
 }
