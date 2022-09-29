@@ -22,7 +22,7 @@ The auction is instantiated with the following parameters:
 - `priceDenominator`: The common denominator for all the underlying prices
 - `endDate`: The UNIX timestamp (in seconds) at which the auction ends
 
-Note that prices are denominated in `bid asset per askAsset`, adjusted for granularity.
+Note that prices are denominated in `bid asset per ask Asset`, adjusted for granularity.
 All prices are represented as fractions, with a common denominator being `priceDenominator`:
 - The underlying minimum price is `minPrice/priceDenominator`
 - The underlying maximum price is `maxPrice/priceDenominator`

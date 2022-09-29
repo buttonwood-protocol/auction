@@ -16,7 +16,7 @@ Thus, if you want to denote that 1 WETH is worth 1500 USDC, the fraction you wan
 
 ## How do we represent prices?
 
-There are 4 approaches to representing this price:
+There are 4 approaches we've considered to representing this price:
 - ERC20-Decimals
 - 128-Method
 - Fractions
@@ -29,6 +29,8 @@ In this approach, price is denominated as:
 ```
 This approach is discouraged because the `decimals` property is not a required property of ERC20 tokens (rather from the metadata), and is also primarily for display purposes, not for calculations.
 
+In the example above, this price representation would be `1500 * (10**6)`.
+
 ### 128-Method
 In this approach, price is denominated as:
 ```
@@ -37,7 +39,7 @@ In this approach, price is denominated as:
 This approach presents a standardized way to represent prices that is agnostic to the bid/ask assets. 
 However, it is not very intuitive to read, and it constrains all prices to be in the format of the ratio `X : 2**128`.
 - If you believe the bid-base-unit is worth 5x the ask-base-unit, you would represent this as `5 * 2**128`.
-- However, there is no way to represent the bid-base-unit being worth 1/5 of the ask-base-unit.
+- However, there is no way to represent the bid-base-unit being worth 1/5 of the ask-base-unit as 2**128 isn't evenly divisible by 5, and will introduce rounding errors and weird decimals when displayed in UI. 
 
 ### Fractions
 This approach encodes the price as a fraction, where the numerator and denominator are both represented as `uint128`.
@@ -52,6 +54,6 @@ This approach is the most flexible out of all the four approaches. It can be cra
 
 It's equivalent to the **ERC20-Decimals** approach, but with a common denominator set to `askAsset.decimals()`
 
-It's equivalent to the **128-Method** approach, but with a common denominator set to `2**128`
+It's equivalent to the **128-Method** approach, when the common denominator is set to `2**128`
 
 It enforces simpler calculations than the **Fractions** approach, and does not restrict the numerator to fit within a `uint128`. 
