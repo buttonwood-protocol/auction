@@ -27,6 +27,7 @@ contract DualAuctionFactory is IAuctionFactory {
         uint256 minPrice,
         uint256 maxPrice,
         uint256 tickWidth,
+        uint256 priceDenominator,
         uint256 endDate
     ) public returns (IDualAuction) {
         bytes memory data = abi.encodePacked(
@@ -35,9 +36,8 @@ contract DualAuctionFactory is IAuctionFactory {
             minPrice,
             maxPrice,
             tickWidth,
-            endDate,
-            IERC20MetadataUpgradeable(bidAsset).decimals(),
-            IERC20MetadataUpgradeable(askAsset).decimals()
+            priceDenominator,
+            endDate
         );
         DualAuction clone = DualAuction(implementation.clone(data));
 

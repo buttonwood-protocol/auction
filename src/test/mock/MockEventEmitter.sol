@@ -44,6 +44,7 @@ contract MockEventEmitter is IDualAuction, IAuctionFactory {
         uint256 minPrice,
         uint256 maxPrice,
         uint256 tickWidth,
+        uint256 priceDenominator,
         uint256 endDate
     ) external returns (IDualAuction) {
         return IDualAuction(address(0));

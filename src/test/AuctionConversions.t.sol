@@ -13,6 +13,7 @@ contract AuctionConversionsTest is DSTestPlus {
     AuctionConversions auctionConversions;
     MockERC20 bidAsset;
     MockERC20 askAsset;
+    uint256 priceDenominator;
     uint256 initialTimestamp;
 
     Vm public constant vm = Vm(HEVM_ADDRESS);
@@ -20,6 +21,7 @@ contract AuctionConversionsTest is DSTestPlus {
     function setUp() public {
         bidAsset = new MockERC20("Bid", "BID", 18);
         askAsset = new MockERC20("Ask", "ASK", 18);
+        priceDenominator = 10**18;
         DualAuction implementation = new DualAuction();
         DualAuctionFactory factory = new DualAuctionFactory(
             address(implementation)
@@ -34,6 +36,7 @@ contract AuctionConversionsTest is DSTestPlus {
                     10**16,
                     10**18,
                     10**16,
+                    priceDenominator,
                     initialTimestamp + 1 days
                 )
             )
@@ -46,9 +49,8 @@ contract AuctionConversionsTest is DSTestPlus {
         assertEq(auctionConversions.minPrice(), 10**16);
         assertEq(auctionConversions.maxPrice(), 10**18);
         assertEq(auctionConversions.tickWidth(), 10**16);
+        assertEq(auctionConversions.priceDenominator(), priceDenominator);
         assertEq(auctionConversions.endDate(), initialTimestamp + 1 days);
-        assertEq(auctionConversions.bidAssetDecimals(), 18);
-        assertEq(auctionConversions.askAssetDecimals(), 18);
     }
 
     function testToBidTokenId(uint256 price) public {
@@ -131,7 +133,7 @@ contract AuctionConversionsTest is DSTestPlus {
         vm.assume(askTokens <= type(uint256).max / price);
         assertEq(
             auctionConversions.askToBid(askTokens, price),
-            (askTokens * price) / (10**18)
+            (askTokens * price) / priceDenominator
         );
     }
 

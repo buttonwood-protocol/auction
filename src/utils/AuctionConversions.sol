@@ -63,7 +63,7 @@ contract AuctionConversions is IAuctionConversions, AuctionImmutableArgs {
             FixedPointMathLib.mulDivDown(
                 askTokens,
                 price,
-                10**bidAssetDecimals()
+                priceDenominator()
             );
     }
 
@@ -82,7 +82,7 @@ contract AuctionConversions is IAuctionConversions, AuctionImmutableArgs {
         return
             FixedPointMathLib.mulDivDown(
                 bidTokens,
-                10**bidAssetDecimals(),
+                priceDenominator(),
                 price
             );
     }

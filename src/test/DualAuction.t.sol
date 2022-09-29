@@ -15,6 +15,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
     DualAuction auction;
     MockERC20 bidAsset;
     MockERC20 askAsset;
+    uint256 priceDenominator;
     AuctionUser user;
     uint256 initialTimestamp;
 
@@ -23,6 +24,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
     function setUp() public {
         bidAsset = new MockERC20("Bid", "BID", 18);
         askAsset = new MockERC20("Ask", "ASK", 18);
+        priceDenominator = 10**18;
         DualAuction implementation = new DualAuction();
         factory = new DualAuctionFactory(address(implementation));
         initialTimestamp = block.timestamp;
@@ -43,6 +45,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
                     10**16,
                     10**18,
                     10**16,
+                    priceDenominator,
                     initialTimestamp + 1 days
                 )
             )
@@ -58,6 +61,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
             10**16,
             10**18,
             10**16,
+            priceDenominator,
             initialTimestamp
         );
     }
@@ -68,37 +72,35 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         assertEq(auction.minPrice(), 10**16);
         assertEq(auction.maxPrice(), 10**18);
         assertEq(auction.tickWidth(), 10**16);
+        assertEq(auction.priceDenominator(), priceDenominator);
         assertEq(auction.endDate(), initialTimestamp + 1 days);
         assertEq(auction.maxBid(), 0);
         assertEq(auction.minAsk(), type(uint256).max);
         assertEq(auction.clearingPrice(), 0);
-        assertEq(auction.bidAssetDecimals(), 18);
-        assertEq(auction.askAssetDecimals(), 18);
     }
 
     function testInstantiationZeroBidAsset() public {
-        // ToDo: Add error-check after price-refactoring
-//        vm.expectRevert(abi.encodeWithSignature("ZeroAddressAsset()"));
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSignature("ZeroAddressAsset()"));
         factory.createAuction(
             address(0),
             address(askAsset),
             0,
             10**18,
             10**16,
+            priceDenominator,
             initialTimestamp + 1 days
         );
     }
 
-    function testFailInstantiationZeroAskAsset() public {
-        // ToDo: Add error-check after price-refactoring
-//        vm.expectRevert(abi.encodeWithSignature("ZeroAddressAsset()"));
+    function testInstantiationZeroAskAsset() public {
+        vm.expectRevert(abi.encodeWithSignature("ZeroAddressAsset()"));
         factory.createAuction(
             address(bidAsset),
             address(0),
             0,
             10**18,
             10**16,
+            priceDenominator,
             initialTimestamp + 1 days
         );
     }
@@ -111,6 +113,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
             0,
             10**18,
             10**16,
+            priceDenominator,
             initialTimestamp + 1 days
         );
     }
@@ -122,6 +125,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
             10**18,
             10**16,
             10**16,
+            priceDenominator,
             initialTimestamp + 1 days
         );
     }
@@ -133,6 +137,19 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
             0,
             2**255,
             10**16,
+            priceDenominator,
+            initialTimestamp + 1 days
+        );
+    }
+
+    function testFailInstantiationInvalidPriceDenominator() public {
+        factory.createAuction(
+            address(bidAsset),
+            address(askAsset),
+            0,
+            2**255,
+            10**16,
+            0,
             initialTimestamp + 1 days
         );
     }
@@ -144,6 +161,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
             0,
             10**18,
             10**16,
+            priceDenominator,
             initialTimestamp - 1 days
         );
     }
@@ -261,6 +279,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
                     2 * 10**16,
                     10**18,
                     10**16,
+                    priceDenominator,
                     initialTimestamp + 1 days
                 )
             )
@@ -290,6 +309,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
                     10**16,
                     10**18,
                     10**16,
+                    priceDenominator,
                     initialTimestamp + 1 days
                 )
             )
@@ -438,6 +458,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
                     2 * 10**16,
                     10**18,
                     10**16,
+                    priceDenominator,
                     initialTimestamp + 1 days
                 )
             )
@@ -467,6 +488,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
                     10**16,
                     10**18,
                     10**16,
+                    priceDenominator,
                     initialTimestamp + 1 days
                 )
             )
