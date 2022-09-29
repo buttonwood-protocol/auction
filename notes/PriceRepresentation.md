@@ -16,7 +16,7 @@ Thus, if you want to denote that 1 WETH is worth 1500 USDC, the fraction you wan
 
 ## How do we represent prices?
 
-There are 4 approaches we've considered to representing this price:
+There are 4 approaches we've considered for representing this price:
 - ERC20-Decimals
 - 128-Method
 - Fractions
@@ -52,7 +52,7 @@ If you don't enforce minPrice, maxPrice, and tickWidth to have the same denomina
 ### Common Denominator
 This approach is the most flexible out of all the four approaches. It can be crafted in a way such that it's the most intuitive to read, and is the most straightforward to add/subtract/multiply/divide.
 
-It's equivalent to the **ERC20-Decimals** approach, but with a common denominator set to `askAsset.decimals()`
+It's equivalent to the **ERC20-Decimals** approach, when the common denominator is set to `askAsset.decimals()`
 
 It's equivalent to the **128-Method** approach, when the common denominator is set to `2**128`
 
