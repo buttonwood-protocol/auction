@@ -101,7 +101,7 @@ contract AuctionConversionsTest is DSTestPlus {
     function testBidToAsk(uint256 bidTokens, uint256 price) public {
         // Ensuring that the overflow won't happen in the mulDivDown
         vm.assume(bidTokens <= type(uint256).max / (10**bidAsset.decimals()));
-        vm.assume(price > uint256(0));
+        vm.assume(price > 0);
         assertEq(
             auctionConversions.bidToAsk(bidTokens, price),
             (bidTokens * (10**18)) / price
@@ -111,7 +111,7 @@ contract AuctionConversionsTest is DSTestPlus {
     function testCannotBidToAskOverflow(uint256 bidTokens, uint256 price)
         public
     {
-        vm.assume(price > uint256(0));
+        vm.assume(price > 0);
         // Ensuring that the overflow will happen in the mulDivDown
         vm.assume(bidTokens > type(uint256).max / (10**bidAsset.decimals()));
         vm.expectRevert();
@@ -120,14 +120,14 @@ contract AuctionConversionsTest is DSTestPlus {
 
     // AskToBid does not have same zeroPrice condition
     function testCannotBidToAskZeroPrice(uint256 bidTokens) public {
-        uint256 price = uint256(0);
+        uint256 price = 0;
         vm.expectRevert(abi.encodeWithSignature("InvalidPrice()"));
         auctionConversions.bidToAsk(bidTokens, price);
     }
 
     function testAskToBid(uint256 askTokens, uint256 price) public {
         // Ensuring that the overflow won't happen in the mulDivDown (also that 1/price does not revert in next line)
-        vm.assume(price > uint256(0));
+        vm.assume(price > 0);
         vm.assume(askTokens <= type(uint256).max / price);
         assertEq(
             auctionConversions.askToBid(askTokens, price),
@@ -138,7 +138,7 @@ contract AuctionConversionsTest is DSTestPlus {
     function testCannotAskToBidOverflow(uint256 askTokens, uint256 price)
     public
     {
-        vm.assume(price > uint256(0));
+        vm.assume(price > 0);
         // Ensuring that the overflow will happen in the mulDivDown
         vm.assume(askTokens > type(uint256).max / price);
         vm.expectRevert();
