@@ -15,6 +15,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
     DualAuction auction;
     MockERC20 bidAsset;
     MockERC20 askAsset;
+    uint128 priceDenominator = 10**18;
     AuctionUser user;
     uint256 initialTimestamp;
 
@@ -43,6 +44,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
                     10**16,
                     10**18,
                     10**16,
+                    priceDenominator,
                     initialTimestamp + 1 days
                 )
             )
@@ -58,6 +60,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
             10**16,
             10**18,
             10**16,
+            priceDenominator,
             initialTimestamp
         );
     }
@@ -68,37 +71,35 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         assertEq(auction.minPrice(), 10**16);
         assertEq(auction.maxPrice(), 10**18);
         assertEq(auction.tickWidth(), 10**16);
+        assertEq(auction.priceDenominator(), 10**18);
         assertEq(auction.endDate(), initialTimestamp + 1 days);
         assertEq(auction.maxBid(), 0);
-        assertEq(auction.minAsk(), type(uint256).max);
+        assertEq(auction.minAsk(), type(uint128).max);
         assertEq(auction.clearingPrice(), 0);
-        assertEq(auction.bidAssetDecimals(), 18);
-        assertEq(auction.askAssetDecimals(), 18);
     }
 
     function testInstantiationZeroBidAsset() public {
-        // ToDo: Add error-check after price-refactoring
-//        vm.expectRevert(abi.encodeWithSignature("ZeroAddressAsset()"));
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSignature("ZeroAddressAsset()"));
         factory.createAuction(
             address(0),
             address(askAsset),
             0,
             10**18,
             10**16,
+            priceDenominator,
             initialTimestamp + 1 days
         );
     }
 
-    function testFailInstantiationZeroAskAsset() public {
-        // ToDo: Add error-check after price-refactoring
-//        vm.expectRevert(abi.encodeWithSignature("ZeroAddressAsset()"));
+    function testInstantiationZeroAskAsset() public {
+        vm.expectRevert(abi.encodeWithSignature("ZeroAddressAsset()"));
         factory.createAuction(
             address(bidAsset),
             address(0),
             0,
             10**18,
             10**16,
+            priceDenominator,
             initialTimestamp + 1 days
         );
     }
@@ -111,6 +112,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
             0,
             10**18,
             10**16,
+            priceDenominator,
             initialTimestamp + 1 days
         );
     }
@@ -122,6 +124,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
             10**18,
             10**16,
             10**16,
+            priceDenominator,
             initialTimestamp + 1 days
         );
     }
@@ -131,8 +134,9 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
             address(bidAsset),
             address(askAsset),
             0,
-            2**255,
+            2**127,
             10**16,
+            priceDenominator,
             initialTimestamp + 1 days
         );
     }
@@ -144,6 +148,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
             0,
             10**18,
             10**16,
+            priceDenominator,
             initialTimestamp - 1 days
         );
     }
@@ -153,7 +158,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
     function testBidBasic() public {
         // 1 for 1
         uint256 amount = 10**18;
-        uint256 price = 10**18;
+        uint128 price = 10**18;
 
         bidAsset.mint(address(user), amount);
         assertEq(
@@ -175,7 +180,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         assertEq(bidAsset.balanceOf(address(auction)), amount);
     }
 
-    function testBid(uint256 price, uint128 amount) public {
+    function testBid(uint128 price, uint128 amount) public {
         if (amount == 0) amount = 1;
         price = coercePrice(price);
 
@@ -199,7 +204,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
     function testMaxBid(uint128 amount) public {
         if (amount == 0) amount = 1;
         assertEq(auction.maxBid(), 0);
-        uint256 price = 10**16 * 2;
+        uint128 price = 10**16 * 2;
         bidAsset.mint(address(user), uint256(amount) * 3);
         user.approve(address(bidAsset), uint256(amount) * 3);
         user.bid(amount, price);
@@ -261,6 +266,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
                     2 * 10**16,
                     10**18,
                     10**16,
+                    priceDenominator,
                     initialTimestamp + 1 days
                 )
             )
@@ -290,6 +296,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
                     10**16,
                     10**18,
                     10**16,
+                    priceDenominator,
                     initialTimestamp + 1 days
                 )
             )
@@ -298,7 +305,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
 
         // 1 for 1
         uint256 amount = 10**18;
-        uint256 price = 10**18;
+        uint128 price = 10**18;
 
         uint256 expectedBidAmount = (amount * (10000 - feeBps)) / 10000;
 
@@ -334,7 +341,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
     function testAskBasic() public {
         // 1 token at 1:1 price
         uint256 amount = 10**18;
-        uint256 price = 10**18;
+        uint128 price = 10**18;
 
         askAsset.mint(address(user), amount);
         assertEq(
@@ -355,7 +362,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         assertEq(askAsset.balanceOf(address(auction)), amount);
     }
 
-    function testAsk(uint256 price, uint128 amount) public {
+    function testAsk(uint128 price, uint128 amount) public {
         if (amount == 0) amount = 1;
         price = coercePrice(price);
         askAsset.mint(address(user), amount);
@@ -376,10 +383,10 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
 
     function testMinAsk(uint128 amount) public {
         if (amount == 0) amount = 1;
-        uint256 price = 10**16 * 3;
+        uint128 price = 10**16 * 3;
         askAsset.mint(address(user), uint256(amount) * 3);
         user.approve(address(askAsset), uint256(amount) * 3);
-        assertEq(auction.minAsk(), type(uint256).max);
+        assertEq(auction.minAsk(), type(uint128).max);
         user.ask(amount, price);
 
         assertEq(auction.minAsk(), price);
@@ -438,6 +445,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
                     2 * 10**16,
                     10**18,
                     10**16,
+                    priceDenominator,
                     initialTimestamp + 1 days
                 )
             )
@@ -467,6 +475,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
                     10**16,
                     10**18,
                     10**16,
+                    priceDenominator,
                     initialTimestamp + 1 days
                 )
             )
@@ -476,7 +485,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
 
         // 1 token at 1:1 price
         uint256 amount = 10**18;
-        uint256 price = 10**18;
+        uint128 price = 10**18;
 
         uint256 expectedAskAmount = (amount * (10000 - feeBps)) / 10000;
 
@@ -508,7 +517,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
 
     // SETTLE
 
-    function testSettleOnlyBid(uint256 price, uint128 amount) public {
+    function testSettleOnlyBid(uint128 price, uint128 amount) public {
         if (amount == 0) amount = 1;
         price = coercePrice(price);
 
@@ -524,7 +533,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         assertEq(auction.clearingPrice(), 0);
     }
 
-    function testSettleOnlyAsk(uint256 price, uint128 amount) public {
+    function testSettleOnlyAsk(uint128 price, uint128 amount) public {
         if (amount == 0) amount = 1;
         price = coercePrice(price);
 
@@ -541,8 +550,8 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
     function testSettleBidAskNoOverlap(uint128 amount) public {
         if (amount == 0) amount = 1;
 
-        uint256 bidPrice = 10**16;
-        uint256 askPrice = 10**16 * 2;
+        uint128 bidPrice = 10**16;
+        uint128 askPrice = 10**16 * 2;
         askAsset.mint(address(user), amount);
         user.approve(address(askAsset), amount);
         user.ask(amount, askPrice);
@@ -558,7 +567,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
 
     function testSettleBidAskSamePrice() public {
         uint256 amount = 10**18;
-        uint256 price = 10**18;
+        uint128 price = 10**18;
 
         askAsset.mint(address(user), amount);
         user.approve(address(askAsset), amount);
@@ -575,7 +584,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
 
     function testSettleBidAskSamePriceWithExtraBid() public {
         uint256 amount = 10**18;
-        uint256 price = 10**18;
+        uint128 price = 10**18;
 
         askAsset.mint(address(user), amount);
         user.approve(address(askAsset), amount);
@@ -600,8 +609,8 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
     function testSettleBidAskOverlap(uint128 amount) public {
         if (amount == 0) amount = 1;
 
-        uint256 bidPrice = 10**16 * 2;
-        uint256 askPrice = 10**16;
+        uint128 bidPrice = 10**16 * 2;
+        uint128 askPrice = 10**16;
         askAsset.mint(address(user), amount);
         user.approve(address(askAsset), amount);
         user.ask(amount, askPrice);
@@ -618,8 +627,8 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
     function testSettleBidAskMoreAsk() public {
         uint256 bidAmount = 10**18;
         uint256 askAmount = 10**18 * 100;
-        uint256 bidPrice = 10**16 * 4;
-        uint256 askPrice = 10**16 * 2;
+        uint128 bidPrice = 10**16 * 4;
+        uint128 askPrice = 10**16 * 2;
         askAsset.mint(address(user), askAmount);
         user.approve(address(askAsset), askAmount);
         user.ask(askAmount, askPrice);
@@ -636,8 +645,8 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
     function testSettleBidAskMoreBid() public {
         uint256 bidAmount = 10**18 * 100;
         uint256 askAmount = 10**18;
-        uint256 bidPrice = 10**16 * 4;
-        uint256 askPrice = 10**16 * 2;
+        uint128 bidPrice = 10**16 * 4;
+        uint128 askPrice = 10**16 * 2;
         askAsset.mint(address(user), askAmount);
         user.approve(address(askAsset), askAmount);
         user.ask(askAmount, askPrice);
@@ -667,7 +676,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         assertEq(auction.clearingPrice(), (10**16 * 5) / 2);
     }
 
-    function testFailSettleTwice(uint256 price, uint128 amount) public {
+    function testFailSettleTwice(uint128 price, uint128 amount) public {
         if (amount == 0) amount = 1;
         price = coercePrice(price);
 
@@ -680,7 +689,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         auction.settle();
     }
 
-    function testFailSettleBeforeEnd(uint256 price, uint128 amount) public {
+    function testFailSettleBeforeEnd(uint128 price, uint128 amount) public {
         if (amount == 0) amount = 1;
         price = coercePrice(price);
 
@@ -693,7 +702,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
 
     function testRedeemBasic() public {
         uint256 amount = 10**18;
-        uint256 price = 10**18;
+        uint128 price = 10**18;
         askAsset.mint(address(user), amount);
         user.approve(address(askAsset), amount);
         uint256 askShares = user.ask(amount, price);
@@ -728,8 +737,8 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
 
     function testRedeemDifferentPrices() public {
         uint256 amount = 10**18;
-        uint256 bidPrice = 10**16 * 4;
-        uint256 askPrice = 10**16;
+        uint128 bidPrice = 10**16 * 4;
+        uint128 askPrice = 10**16;
         askAsset.mint(address(user), amount);
         user.approve(address(askAsset), amount);
         uint256 askShares = user.ask(amount, askPrice);
@@ -820,7 +829,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
 
     function testRedeemBidNotCleared() public {
         uint256 amount = 10**18;
-        uint256 price = 10**18;
+        uint128 price = 10**18;
         bidAsset.mint(address(user), amount);
         user.approve(address(bidAsset), amount);
         uint256 bidShares = user.bid(amount, price);
@@ -841,7 +850,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
 
     function testRedeemAskNotCleared() public {
         uint256 amount = 10**18;
-        uint256 price = 10**18;
+        uint128 price = 10**18;
         askAsset.mint(address(user), amount);
         user.approve(address(askAsset), amount);
         uint256 askShares = user.ask(amount, price);
@@ -864,7 +873,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
     // Defaulting to just `testFail`
     function testFailRedeemZero() public {
         uint256 amount = 10**18;
-        uint256 price = 10**18;
+        uint128 price = 10**18;
         askAsset.mint(address(user), amount);
         user.approve(address(askAsset), amount);
         user.ask(amount, price);
@@ -879,7 +888,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
 
     function testFailRedeemTooMany() public {
         uint256 amount = 10**18;
-        uint256 price = 10**18;
+        uint128 price = 10**18;
         askAsset.mint(address(user), amount);
         user.approve(address(askAsset), amount);
         user.ask(amount, price);
@@ -894,7 +903,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
 
     function testFailRedeemTwice() public {
         uint256 amount = 10**18;
-        uint256 price = 10**18;
+        uint128 price = 10**18;
         askAsset.mint(address(user), amount);
         user.approve(address(askAsset), amount);
         user.ask(amount, price);
@@ -913,7 +922,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
     // Defaulting to just `testFail`
     function testFailRedeemAuctionNotSettled() public {
         uint256 amount = 10**18;
-        uint256 price = 10**18;
+        uint128 price = 10**18;
         askAsset.mint(address(user), amount);
         user.approve(address(askAsset), amount);
         user.ask(amount, price);
@@ -1047,8 +1056,8 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
             uint256 runSeed = uint256(keccak256(abi.encode(seed + i)));
             uint256 amount = uint256(keccak256(abi.encode(runSeed)));
             if (amount > 2**126 - 1) amount = (amount % 2**126) - 1;
-            uint256 price = coercePrice(
-                uint256(keccak256(abi.encode(runSeed + 1)))
+            uint128 price = coercePrice(
+                uint128(uint256(keccak256(abi.encode(runSeed + 1))))
             );
             bool isBid = uint256(keccak256(abi.encode(runSeed + 2))) % 2 == 0;
 
@@ -1080,7 +1089,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         assertEqThreshold(askAsset.balanceOf(address(auction)), 0, 20);
     }
 
-    function coercePrice(uint256 price) internal view returns (uint256) {
+    function coercePrice(uint128 price) internal view returns (uint128) {
         if (price > auction.maxPrice())
             return
                 coercePrice(

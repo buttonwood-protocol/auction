@@ -6,15 +6,15 @@ import {IDualAuction} from "../../interfaces/IDualAuction.sol";
 import "forge-std/Vm.sol";
 
 contract MockEventEmitter is IDualAuction, IAuctionFactory {
-    function maxBid() external view returns (uint256){
+    function maxBid() external view returns (uint128){
         return 0;
     }
 
-    function minAsk() external view returns (uint256){
+    function minAsk() external view returns (uint128){
         return 0;
     }
 
-    function clearingPrice() external view returns (uint256){
+    function clearingPrice() external view returns (uint128){
         return 0;
     }
 
@@ -22,15 +22,15 @@ contract MockEventEmitter is IDualAuction, IAuctionFactory {
         return false;
     }
 
-    function bid(uint256 amountIn, uint256 price) external returns (uint256){
+    function bid(uint256 amountIn, uint128 price) external returns (uint256){
         return 0;
     }
 
-    function ask(uint256 amountIn, uint256 price) external returns (uint256){
+    function ask(uint256 amountIn, uint128 price) external returns (uint256){
         return 0;
     }
 
-    function settle() external returns (uint256){
+    function settle() external returns (uint128){
         return 0;
     }
 
@@ -41,9 +41,10 @@ contract MockEventEmitter is IDualAuction, IAuctionFactory {
     function createAuction(
         address bidAsset,
         address askAsset,
-        uint256 minPrice,
-        uint256 maxPrice,
-        uint256 tickWidth,
+        uint128 minPrice,
+        uint128 maxPrice,
+        uint128 tickWidth,
+        uint128 priceDenominator,
         uint256 endDate
     ) external returns (IDualAuction) {
         return IDualAuction(address(0));

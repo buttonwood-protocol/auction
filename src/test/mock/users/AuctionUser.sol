@@ -15,11 +15,11 @@ contract AuctionUser is ERC1155Holder {
         IERC20(asset).approve(address(auction), amount);
     }
 
-    function bid(uint256 amount, uint256 price) external returns (uint256) {
+    function bid(uint256 amount, uint128 price) external returns (uint256) {
         return auction.bid(amount, price);
     }
 
-    function ask(uint256 amount, uint256 price) external returns (uint256) {
+    function ask(uint256 amount, uint128 price) external returns (uint256) {
         return auction.ask(amount, price);
     }
 

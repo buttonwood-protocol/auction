@@ -13,6 +13,7 @@ contract AuctionConversionsTest is DSTestPlus {
     AuctionConversions auctionConversions;
     MockERC20 bidAsset;
     MockERC20 askAsset;
+    uint128 priceDenominator;
     uint256 initialTimestamp;
 
     Vm public constant vm = Vm(HEVM_ADDRESS);
@@ -20,6 +21,7 @@ contract AuctionConversionsTest is DSTestPlus {
     function setUp() public {
         bidAsset = new MockERC20("Bid", "BID", 18);
         askAsset = new MockERC20("Ask", "ASK", 18);
+        priceDenominator = 10**18;
         DualAuction implementation = new DualAuction();
         DualAuctionFactory factory = new DualAuctionFactory(
             address(implementation)
@@ -34,6 +36,7 @@ contract AuctionConversionsTest is DSTestPlus {
                     10**16,
                     10**18,
                     10**16,
+                    priceDenominator,
                     initialTimestamp + 1 days
                 )
             )
@@ -46,39 +49,38 @@ contract AuctionConversionsTest is DSTestPlus {
         assertEq(auctionConversions.minPrice(), 10**16);
         assertEq(auctionConversions.maxPrice(), 10**18);
         assertEq(auctionConversions.tickWidth(), 10**16);
+        assertEq(auctionConversions.priceDenominator(), 10**18);
         assertEq(auctionConversions.endDate(), initialTimestamp + 1 days);
-        assertEq(auctionConversions.bidAssetDecimals(), 18);
-        assertEq(auctionConversions.askAssetDecimals(), 18);
     }
 
     function testToBidTokenId(uint128 price) public {
-        uint256 bidLimit = uint256(
-            0x8000000000000000000000000000000000000000000000000000000000000000
+        uint128 bidLimit = uint128(
+            0x80000000000000000000000000000000
         );
         vm.assume(price < bidLimit);
-        assertEq(auctionConversions.toBidTokenId(price), price);
+        assertEq(auctionConversions.toBidTokenId(price), (uint256(price) << 128) + priceDenominator);
     }
 
     function testCannotToBidTokenIdPriceTooHigh() public {
         vm.expectRevert(abi.encodeWithSignature("InvalidPrice()"));
-        uint256 price = uint256(
-            0x8000000000000000000000000000000000000000000000000000000000000000
+        uint128 price = uint128(
+            0x80000000000000000000000000000000
         );
         auctionConversions.toBidTokenId(price);
     }
 
     function testToAskTokenId(uint128 price) public {
-        uint256 askLimit = uint256(
-            0x8000000000000000000000000000000000000000000000000000000000000000
+        uint128 askLimit = uint128(
+            0x80000000000000000000000000000000
         );
         vm.assume(price < askLimit);
-        assertEq(auctionConversions.toAskTokenId(price), askLimit + price);
+        assertEq(auctionConversions.toAskTokenId(price), (uint256(askLimit + price) << 128) + priceDenominator);
     }
 
     function testCannotToAskTokenIdPriceTooHigh() public {
         vm.expectRevert(abi.encodeWithSignature("InvalidPrice()"));
-        uint256 price = uint256(
-            0x8000000000000000000000000000000000000000000000000000000000000000
+        uint128 price = uint128(
+            0x80000000000000000000000000000000
         );
         auctionConversions.toAskTokenId(price);
     }
@@ -95,10 +97,10 @@ contract AuctionConversionsTest is DSTestPlus {
             0x8000000000000000000000000000000000000000000000000000000000000000
         );
         vm.assume(tokenId > tokenIdLowerLimit);
-        assertEq(auctionConversions.toPrice(tokenId), tokenId & (2**255 - 1));
+        assertEq(auctionConversions.toPrice(tokenId), (tokenId & (2**255 - 1)) >> 128);
     }
 
-    function testBidToAsk(uint256 bidTokens, uint256 price) public {
+    function testBidToAsk(uint256 bidTokens, uint128 price) public {
         // Ensuring that the overflow won't happen in the mulDivDown
         vm.assume(type(uint256).max / (10**bidAsset.decimals()) >= bidTokens);
         vm.assume(price > uint128(0));
@@ -108,7 +110,7 @@ contract AuctionConversionsTest is DSTestPlus {
         );
     }
 
-    function testCannotBidToAskOverflow(uint256 bidTokens, uint256 price)
+    function testCannotBidToAskOverflow(uint256 bidTokens, uint128 price)
         public
     {
         vm.assume(price > uint128(0));
@@ -120,12 +122,12 @@ contract AuctionConversionsTest is DSTestPlus {
 
     // AskToBid does not have same zeroPrice condition
     function testCannotBidToAskZeroPrice(uint256 bidTokens) public {
-        uint256 price = uint256(0);
+        uint128 price = uint128(0);
         vm.expectRevert(abi.encodeWithSignature("InvalidPrice()"));
         auctionConversions.bidToAsk(bidTokens, price);
     }
 
-    function testAskToBid(uint256 askTokens, uint256 price) public {
+    function testAskToBid(uint256 askTokens, uint128 price) public {
         // Ensuring that the overflow won't happen in the mulDivDown
         vm.assume(price > uint128(0));
         vm.assume(type(uint256).max / price >= askTokens);
@@ -135,7 +137,7 @@ contract AuctionConversionsTest is DSTestPlus {
         );
     }
 
-    function testCannotAskToBidOverflow(uint256 askTokens, uint256 price)
+    function testCannotAskToBidOverflow(uint256 askTokens, uint128 price)
     public
     {
         vm.assume(price > uint128(0));

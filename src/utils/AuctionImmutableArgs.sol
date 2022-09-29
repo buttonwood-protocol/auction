@@ -10,6 +10,22 @@ import {Clone} from "clones-with-immutable-args/Clone.sol";
  * we fetch args from the code section
  */
 contract AuctionImmutableArgs is Clone {
+
+    /// @notice Reads an immutable arg with type uint128
+    /// @param argOffset The offset of the arg in the packed data
+    /// @return arg The arg value
+    function _getArgUint128(uint256 argOffset)
+    internal
+    pure
+    returns (uint64 arg)
+    {
+        uint256 offset = _getImmutableArgsOffset();
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            arg := shr(0x80, calldataload(add(offset, argOffset)))
+        }
+    }
+
     /**
      * @notice The asset being used to make bids
      * @dev using ClonesWithImmutableArgs pattern here to save gas
@@ -36,8 +52,8 @@ contract AuctionImmutableArgs is Clone {
      * @dev https://github.com/wighawag/clones-with-immutable-args
      * @return The minimum allowed price
      */
-    function minPrice() public pure returns (uint256) {
-        return _getArgUint256(40);
+    function minPrice() public pure returns (uint128) {
+        return _getArgUint128(40);
     }
 
     /**
@@ -49,8 +65,8 @@ contract AuctionImmutableArgs is Clone {
      * @dev https://github.com/wighawag/clones-with-immutable-args
      * @return The maximum allowed price
      */
-    function maxPrice() public pure returns (uint256) {
-        return _getArgUint256(72);
+    function maxPrice() public pure returns (uint128) {
+        return _getArgUint128(56);
     }
 
     /**
@@ -59,8 +75,18 @@ contract AuctionImmutableArgs is Clone {
      * @dev https://github.com/wighawag/clones-with-immutable-args
      * @return The width of ticks
      */
-    function tickWidth() public pure returns (uint256) {
-        return _getArgUint256(104);
+    function tickWidth() public pure returns (uint128) {
+        return _getArgUint128(72);
+    }
+
+    /**
+     * @notice The denominator used to calculate the prices
+     * @dev using ClonesWithImmutableArgs pattern here to save gas
+     * @dev https://github.com/wighawag/clones-with-immutable-args
+     * @return The denominator of the prices
+     */
+    function priceDenominator() public pure returns (uint128) {
+        return _getArgUint128(88);
     }
 
     /**
@@ -70,26 +96,6 @@ contract AuctionImmutableArgs is Clone {
      * @return The timestamp at which the auction will end
      */
     function endDate() public pure returns (uint256) {
-        return _getArgUint256(136);
-    }
-
-    /**
-     * @notice The number of dceimals for the bid asset
-     * @dev using ClonesWithImmutableArgs pattern here to save gas
-     * @dev https://github.com/wighawag/clones-with-immutable-args
-     * @return The number of decimals for the bid asset
-     */
-    function bidAssetDecimals() public pure returns (uint256) {
-        return _getArgUint8(168);
-    }
-
-    /**
-     * @notice The number of decimals for the ask asset
-     * @dev using ClonesWithImmutableArgs pattern here to save gas
-     * @dev https://github.com/wighawag/clones-with-immutable-args
-     * @return The number of decimals for the ask asset
-     */
-    function askAssetDecimals() public pure returns (uint256) {
-        return _getArgUint8(169);
+        return _getArgUint256(104);
     }
 }

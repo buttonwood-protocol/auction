@@ -23,21 +23,21 @@ contract DualAuction is
     AuctionConversions,
     IDualAuction
 {
-    /// @notice the maximum allowed price is 2^255 because we save the top bit for
+    /// @notice the maximum allowed price is 2^127 because we save the top bit for
     /// differentiating between bids and asks in the token id
-    uint256 internal constant MAXIMUM_ALLOWED_PRICE = 2**255 - 1;
+    uint256 internal constant MAXIMUM_ALLOWED_PRICE = 2**127 - 1;
 
     /// @notice The highest bid received so far
-    uint256 public maxBid;
+    uint128 public maxBid;
 
     /// @notice The lowest ask received so far
-    uint256 public minAsk;
+    uint128 public minAsk;
 
     /// @notice The clearing bid price of the auction, set after settlement
-    uint256 public clearingBidPrice;
+    uint128 public clearingBidPrice;
 
     /// @notice The clearing ask price of the auction, set after settlement
-    uint256 public clearingAskPrice;
+    uint128 public clearingAskPrice;
 
     /// @notice The number of bid tokens cleared at the tick closest to clearing price
     uint256 public bidTokensClearedAtClearing;
@@ -53,7 +53,7 @@ contract DualAuction is
      * validity is defined as in range (minPrice, maxPrice) and
      * on a valid tick
      */
-    modifier onlyValidPrice(uint256 price) {
+    modifier onlyValidPrice(uint128 price) {
         if (price < minPrice() || price > maxPrice()) revert InvalidPrice();
         if ((price - minPrice()) % tickWidth() != 0) revert InvalidPrice();
         _;
@@ -100,13 +100,13 @@ contract DualAuction is
         if (maxPrice() > MAXIMUM_ALLOWED_PRICE) revert InvalidPrice();
         if ((maxPrice() - minPrice()) % tickWidth() != 0) revert InvalidPrice();
         if (endDate() <= block.timestamp) revert AuctionHasEnded();
-        minAsk = type(uint256).max;
+        minAsk = type(uint128).max;
     }
 
     /**
      * @inheritdoc IDualAuction
      */
-    function bid(uint256 amountIn, uint256 price)
+    function bid(uint256 amountIn, uint128 price)
         external
         onlyValidPrice(price)
         onlyAuctionActive
@@ -132,7 +132,7 @@ contract DualAuction is
     /**
      * @inheritdoc IDualAuction
      */
-    function ask(uint256 amountIn, uint256 price)
+    function ask(uint256 amountIn, uint128 price)
         external
         onlyValidPrice(price)
         onlyAuctionActive
@@ -158,13 +158,13 @@ contract DualAuction is
     /**
      * @inheritdoc IDualAuction
      */
-    function settle() external onlyAuctionEnded returns (uint256) {
+    function settle() external onlyAuctionEnded returns (uint128) {
         if (settled) revert AuctionHasSettled();
         settled = true;
 
-        uint256 currentBid = maxBid;
-        uint256 currentAsk = minAsk;
-        uint256 _tickWidth = tickWidth();
+        uint128 currentBid = maxBid;
+        uint128 currentAsk = minAsk;
+        uint128 _tickWidth = tickWidth();
 
         // no overlap, nothing will be cleared
         if (currentBid < currentAsk) {
@@ -172,8 +172,8 @@ contract DualAuction is
             return 0;
         }
 
-        uint256 lowBid = currentBid;
-        uint256 highAsk = currentAsk;
+        uint128 lowBid = currentBid;
+        uint128 highAsk = currentAsk;
         uint256 currentAskTokens;
         uint256 currentDesiredAskTokens;
         uint256 lastBidClear;
@@ -215,7 +215,7 @@ contract DualAuction is
 
         clearingBidPrice = lowBid;
         clearingAskPrice = highAsk;
-        uint256 _clearingPrice = clearingPrice();
+        uint128 _clearingPrice = clearingPrice();
         askTokensClearedAtClearing = lastAskClear;
         bidTokensClearedAtClearing = askToBid(lastBidClear, _clearingPrice);
 
@@ -258,7 +258,7 @@ contract DualAuction is
     /**
      * @inheritdoc IDualAuction
      */
-    function clearingPrice() public view override returns (uint256) {
+    function clearingPrice() public view override returns (uint128) {
         return (clearingBidPrice + clearingAskPrice) / 2;
     }
 
@@ -274,8 +274,8 @@ contract DualAuction is
         view
         returns (uint256 bidTokens, uint256 askTokens)
     {
-        uint256 price = toPrice(tokenId);
-        uint256 _clearingPrice = clearingPrice();
+        uint128 price = toPrice(tokenId);
+        uint128 _clearingPrice = clearingPrice();
 
         if (isBidTokenId(tokenId)) {
             uint256 _clearingBid = clearingBidPrice;

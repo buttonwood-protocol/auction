@@ -42,7 +42,7 @@ interface IDualAuction is IAuctionConversions {
         address indexed actor,
         uint256 amountIn,
         uint256 amountOut,
-        uint256 indexed price
+        uint128 indexed price
     );
 
     /// @notice Event declaring that an ask was made
@@ -50,7 +50,7 @@ interface IDualAuction is IAuctionConversions {
         address indexed actor,
         uint256 amountIn,
         uint256 amountOut,
-        uint256 indexed price
+        uint128 indexed price
     );
 
     /// @notice Event notifying about the settlement of an auction
@@ -66,13 +66,13 @@ interface IDualAuction is IAuctionConversions {
     );
 
     /// @notice The highest bid received so far
-    function maxBid() external view returns (uint256);
+    function maxBid() external view returns (uint128);
 
     /// @notice The lowest ask received so far
-    function minAsk() external view returns (uint256);
+    function minAsk() external view returns (uint128);
 
     /// @notice The clearing price of the auction, set after settlement
-    function clearingPrice() external view returns (uint256);
+    function clearingPrice() external view returns (uint128);
 
     /// @notice True if the auction has been settled, eles false
     function settled() external view returns (bool);
@@ -84,7 +84,7 @@ interface IDualAuction is IAuctionConversions {
      * @param price the price at which to bid, denominated in terms of bidAsset per askAsset
      * @return The number of shares output
      */
-    function bid(uint256 amountIn, uint256 price) external returns (uint256);
+    function bid(uint256 amountIn, uint128 price) external returns (uint256);
 
     /**
      * @notice Places an ask using amountIn askAsset tokens,
@@ -93,7 +93,7 @@ interface IDualAuction is IAuctionConversions {
      * @param price the price at which to ask, denominated in terms of bidAsset per askAsset
      * @return The number of shares output
      */
-    function ask(uint256 amountIn, uint256 price) external returns (uint256);
+    function ask(uint256 amountIn, uint128 price) external returns (uint256);
 
     /**
      * @notice Settles the auction after the end date
@@ -101,7 +101,7 @@ interface IDualAuction is IAuctionConversions {
      *  The clearing price, setting the clearingPrice variable afterwards
      * @return The settled clearing price, or 0 if none
      */
-    function settle() external returns (uint256);
+    function settle() external returns (uint128);
 
     /**
      * @notice Redeems bid/ask slips after the auction has concluded
