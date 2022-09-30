@@ -55,6 +55,7 @@ contract AuctionImmutableArgs is Clone {
     /**
      * @notice The width of ticks i.e. allowed prices
      * @dev prices are denominated as the numerator of the bidAsset/askAsset fraction. priceDenominator is the denominator.
+     * @dev Must evenly divide the range between minPrice and maxPrice by NUM_TICKS = 100.
      * @dev using ClonesWithImmutableArgs pattern here to save gas
      * @dev https://github.com/wighawag/clones-with-immutable-args
      * @return The width of ticks

@@ -27,6 +27,9 @@ contract DualAuction is
     /// differentiating between bids and asks in the token id
     uint256 internal constant MAXIMUM_ALLOWED_PRICE = 2**255 - 1;
 
+    /// @notice The number of ticks allowed between the minimum and maximum price (inclusive)
+    uint256 internal constant NUM_TICKS = 100;
+
     /// @notice The highest bid received so far
     uint256 public maxBid;
 
@@ -98,7 +101,7 @@ contract DualAuction is
         if (minPrice() == 0) revert InvalidPrice();
         if (minPrice() >= maxPrice()) revert InvalidPrice();
         if (maxPrice() > MAXIMUM_ALLOWED_PRICE) revert InvalidPrice();
-        if ((maxPrice() - minPrice()) % tickWidth() != 0) revert InvalidPrice();
+        if ((maxPrice() - minPrice()) != (NUM_TICKS - 1) * tickWidth()) revert InvalidPrice();
         if (priceDenominator() == 0) revert InvalidPrice();
         if (endDate() <= block.timestamp) revert AuctionHasEnded();
         minAsk = type(uint256).max;
