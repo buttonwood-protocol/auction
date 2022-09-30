@@ -18,7 +18,8 @@ The auction is instantiated with the following parameters:
 - `askAsset`: The asset which is being purchased
 - `minPrice`: The numerator of the lower bound for allowed prices
 - `maxPrice`: The numerator of the upper bound for allowed prices
-- `tickWidth`: The numerator of the spacing between allowed prices
+- `tickWidth`: The numerator of the spacing between allowed prices.
+    - Must evenly divide the range between `minPrice` and `maxPrice` by `NUM_TICKS = 100`.
 - `priceDenominator`: The common denominator for all the underlying prices
 - `endDate`: The UNIX timestamp (in seconds) at which the auction ends
 
