@@ -166,6 +166,19 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         );
     }
 
+    function testInstantiationInvalidNumberOfTicks() public {
+        vm.expectRevert(abi.encodeWithSignature("InvalidPrice()"));
+        factory.createAuction(
+            address(bidAsset),
+            address(askAsset),
+            10**16, // This is 101 ticks
+            10**18 + 10**16,
+            10**16,
+            priceDenominator,
+            initialTimestamp + 1 days
+        );
+    }
+
     // BID
 
     function testBidBasic() public {
