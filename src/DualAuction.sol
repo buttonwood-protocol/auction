@@ -57,8 +57,8 @@ contract DualAuction is
      * on a valid tick
      */
     modifier onlyValidPrice(uint256 price) {
-        if (price < minPrice() || price > maxPrice()) revert InvalidPrice();
-        if ((price - minPrice()) % tickWidth() != 0) revert InvalidPrice();
+        if ((price < minPrice()) || (price > maxPrice())
+        || (price - minPrice()) % tickWidth() != 0) revert InvalidPrice();
         _;
     }
 
