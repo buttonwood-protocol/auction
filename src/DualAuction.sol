@@ -162,7 +162,7 @@ contract DualAuction is
     /**
      * @inheritdoc IDualAuction
      */
-    function settle() external onlyAuctionEnded returns (uint256) {
+    function settle() external onlyAuctionEnded nonReentrant returns (uint256) {
         if (settled) revert AuctionHasSettled();
         settled = true;
 
