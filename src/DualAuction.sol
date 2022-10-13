@@ -183,11 +183,7 @@ contract DualAuction is
         uint256 lastBidClear;
         uint256 lastAskClear;
 
-        while (
-            currentBid >= currentAsk &&
-            currentBid >= minPrice() &&
-            currentAsk <= maxPrice()
-        ) {
+        while (currentBid >= currentAsk) {
             if (currentAskTokens == 0) {
                 currentAskTokens = totalSupply(toAskTokenId(currentAsk));
                 if (currentAskTokens > 0) lastBidClear = 0;
