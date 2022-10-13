@@ -183,36 +183,34 @@ contract DualAuction is
         uint256 lastBidClear;
         uint256 lastAskClear;
 
-        if (currentBid >= minPrice() && currentAsk <= maxPrice()) {
-            while (currentBid >= currentAsk) {
-                if (currentAskTokens == 0) {
-                    currentAskTokens = totalSupply(toAskTokenId(currentAsk));
-                    if (currentAskTokens > 0) lastBidClear = 0;
-                }
-
-                if (currentDesiredAskTokens == 0) {
-                    currentDesiredAskTokens = bidToAsk(
-                        totalSupply(toBidTokenId(currentBid)),
-                        currentBid
-                    );
-
-                    if (currentDesiredAskTokens > 0) lastAskClear = 0;
-                }
-
-                uint256 cleared = min(currentAskTokens, currentDesiredAskTokens);
-
-                if (cleared > 0) {
-                    currentAskTokens -= cleared;
-                    currentDesiredAskTokens -= cleared;
-                    lastBidClear += cleared;
-                    lastAskClear += cleared;
-                    highAsk = currentAsk;
-                    lowBid = currentBid;
-                }
-
-                if (currentAskTokens == 0) currentAsk += _tickWidth;
-                if (currentDesiredAskTokens == 0) currentBid -= _tickWidth;
+        while (currentBid >= currentAsk) {
+            if (currentAskTokens == 0) {
+                currentAskTokens = totalSupply(toAskTokenId(currentAsk));
+                if (currentAskTokens > 0) lastBidClear = 0;
             }
+
+            if (currentDesiredAskTokens == 0) {
+                currentDesiredAskTokens = bidToAsk(
+                    totalSupply(toBidTokenId(currentBid)),
+                    currentBid
+                );
+
+                if (currentDesiredAskTokens > 0) lastAskClear = 0;
+            }
+
+            uint256 cleared = min(currentAskTokens, currentDesiredAskTokens);
+
+            if (cleared > 0) {
+                currentAskTokens -= cleared;
+                currentDesiredAskTokens -= cleared;
+                lastBidClear += cleared;
+                lastAskClear += cleared;
+                highAsk = currentAsk;
+                lowBid = currentBid;
+            }
+
+            if (currentAskTokens == 0) currentAsk += _tickWidth;
+            if (currentDesiredAskTokens == 0) currentBid -= _tickWidth;
         }
 
         clearingBidPrice = lowBid;
