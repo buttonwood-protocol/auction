@@ -75,7 +75,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         assertEq(auction.priceDenominator(), priceDenominator);
         assertEq(auction.endDate(), initialTimestamp + 1 days);
         assertEq(auction.maxBid(), 0);
-        assertEq(auction.minAsk(), type(uint256).max);
+        assertEq(auction.minAsk(), 10**18);
         assertEq(auction.clearingPrice(), 0);
     }
 
@@ -412,7 +412,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         uint256 price = 10**16 * 3;
         askAsset.mint(address(user), uint256(amount) * 3);
         user.approve(address(askAsset), uint256(amount) * 3);
-        assertEq(auction.minAsk(), type(uint256).max);
+        assertEq(auction.minAsk(), 10**18);
         user.ask(amount, price);
 
         assertEq(auction.minAsk(), price);
