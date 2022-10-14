@@ -75,7 +75,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         assertEq(auction.priceDenominator(), priceDenominator);
         assertEq(auction.endDate(), initialTimestamp + 1 days);
         assertEq(auction.maxBid(), 0);
-        assertEq(auction.minAsk(), 10**18);
+        assertEq(auction.minAsk(), type(uint256).max);
         assertEq(auction.clearingPrice(), 0);
     }
 
@@ -412,7 +412,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         uint256 price = 10**16 * 3;
         askAsset.mint(address(user), uint256(amount) * 3);
         user.approve(address(askAsset), uint256(amount) * 3);
-        assertEq(auction.minAsk(), 10**18);
+        assertEq(auction.minAsk(), type(uint256).max);
         user.ask(amount, price);
 
         assertEq(auction.minAsk(), price);
@@ -559,6 +559,21 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         assertEq(auction.clearingPrice(), 0);
     }
 
+    function testSettleOnlyMaxBid(uint128 amount) public {
+        if (amount == 0) amount = 1;
+
+        bidAsset.mint(address(user), amount);
+        user.approve(address(bidAsset), amount);
+        user.bid(amount, auction.maxPrice());
+
+        hevm.warp(initialTimestamp + 2 days);
+        vm.expectEmit(true, false, false, false, address(auction));
+        emit Settle(address(this), 0);
+        auction.settle();
+        assertTrue(auction.settled());
+        assertEq(auction.clearingPrice(), 0);
+    }
+
     function testSettleOnlyAsk(uint256 price, uint128 amount) public {
         if (amount == 0) amount = 1;
         price = coercePrice(price);
@@ -566,6 +581,19 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         askAsset.mint(address(user), amount);
         user.approve(address(askAsset), amount);
         user.ask(amount, price);
+
+        hevm.warp(initialTimestamp + 2 days);
+        auction.settle();
+        assertTrue(auction.settled());
+        assertEq(auction.clearingPrice(), 0);
+    }
+
+    function testSettleOnlyMaxAsk(uint128 amount) public {
+        if (amount == 0) amount = 1;
+
+        askAsset.mint(address(user), amount);
+        user.approve(address(askAsset), amount);
+        user.ask(amount, auction.maxPrice());
 
         hevm.warp(initialTimestamp + 2 days);
         auction.settle();
@@ -1115,6 +1143,7 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         assertEqThreshold(askAsset.balanceOf(address(auction)), 0, 20);
     }
 
+    // ToDo: Can be replaced with vm.assume utility
     function coercePrice(uint256 price) internal view returns (uint256) {
         if (price > auction.maxPrice())
             return

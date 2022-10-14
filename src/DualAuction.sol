@@ -104,7 +104,7 @@ contract DualAuction is
         if ((maxPrice() - minPrice()) != (NUM_TICKS - 1) * tickWidth()) revert InvalidPrice();
         if (priceDenominator() == 0) revert InvalidPrice();
         if (endDate() <= block.timestamp) revert AuctionHasEnded();
-        minAsk = maxPrice();
+        minAsk = type(uint256).max;
     }
 
     /**
