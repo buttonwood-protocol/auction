@@ -186,7 +186,12 @@ contract DualAuction is
         while (currentBid >= currentAsk) {
             if (currentAskTokens == 0) {
                 currentAskTokens = totalSupply(toAskTokenId(currentAsk));
-                if (currentAskTokens > 0) lastBidClear = 0;
+                if (currentAskTokens > 0) {
+                    lastBidClear = 0;
+                } else {
+                    currentAsk += _tickWidth;
+                    continue;
+                }
             }
 
             if (currentDesiredAskTokens == 0) {
@@ -195,7 +200,12 @@ contract DualAuction is
                     currentBid
                 );
 
-                if (currentDesiredAskTokens > 0) lastAskClear = 0;
+                if (currentDesiredAskTokens > 0) {
+                    lastAskClear = 0;
+                } else {
+                    currentBid -= _tickWidth;
+                    continue;
+                }
             }
 
             uint256 cleared = min(currentAskTokens, currentDesiredAskTokens);
