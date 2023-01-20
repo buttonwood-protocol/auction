@@ -144,7 +144,7 @@ contract DualAuction is
         returns (uint256)
     {
         if (amountIn == 0) revert ZeroAmount();
-        if (minAsk == 0 || price < minAsk) minAsk = price;
+        if (price < minAsk) minAsk = price;
         uint256 preTransferBalance = askAsset().balanceOf(address(this));
         SafeTransferLib.safeTransferFrom(
             askAsset(),
