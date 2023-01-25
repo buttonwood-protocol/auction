@@ -730,6 +730,28 @@ contract DualAuctionTest is MockEventEmitter, DSTestPlus {
         assertEq(auction.clearingPrice(), (10**16 * 5) / 2);
     }
 
+    function testSettleMany(uint256 seed) public {
+        for (uint256 tick = 0; tick < 100; tick++) {
+            // Generating pseudo-random nonzero ask and bid amounts for the current tick
+            uint256 pseudoRandom = uint256(keccak256(abi.encodePacked(seed, tick)));
+            uint256 bidAmount = uint256(uint128(pseudoRandom) + 1) * 10**18;
+            uint256 askAmount = ((pseudoRandom >> 128) + 1) * 10**18;
+
+            bidAsset.mint(address(user), bidAmount);
+            user.approve(address(bidAsset), bidAmount);
+            user.bid(bidAmount, 10**16 * (tick + 1));
+
+            askAsset.mint(address(user), askAmount);
+            user.approve(address(askAsset), askAmount);
+            user.ask(askAmount, 10**16 * (tick + 1));
+        }
+        hevm.warp(initialTimestamp + 2 days);
+        auction.settle();
+        assertTrue(auction.settled());
+        assertGt(auction.clearingPrice(), 10**16 - 1);
+        assertLt(auction.clearingPrice(), (10**16 * 100) + 1);
+    }
+
     function testFailSettleTwice(uint256 price, uint128 amount) public {
         if (amount == 0) amount = 1;
         price = coercePrice(price);
