@@ -1,6 +1,6 @@
-name: Test on Push to Main
+name: Test on PR
 on:
-  push:
+  pull_request:
     branches: [main]
 
 env:
@@ -36,5 +36,11 @@ jobs:
 
       - name: Run Forge Coverage
         run: |
-          forge coverage
+          forge coverage > ./coverage-report.md
         id: coverage
+
+      - name: Report Coverage in PR
+        uses: thollander/actions-comment-pull-request@v2.3.1
+        with:
+          filePath: ./coverage-report.md
+          comment_tag: coverage-report
