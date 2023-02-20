@@ -30,10 +30,10 @@ contract DualAuction is
     /// @notice The number of ticks allowed between the minimum and maximum price (inclusive)
     uint256 internal constant NUM_TICKS = 100;
 
-    /// @notice The highest bid received so far
+    /// @notice The highest price for a bid received so far
     uint256 public maxBid;
 
-    /// @notice The lowest ask received so far
+    /// @notice The lowest price for an ask received so far
     uint256 public minAsk;
 
     /// @notice The clearing bid price of the auction, set after settlement
