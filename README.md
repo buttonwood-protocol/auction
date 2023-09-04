@@ -8,10 +8,15 @@ figure out a fair price to transact. The benefit of this approach is that for a 
 of “liquidity” to exist from the start, without the need of a market maker or liquidity provider. The auction is a 
 double-auction, modified to make sense in a high-latency, high-transaction cost, non-private environment.
 
+## Notes
+Refer to the documents in [/notes](/notes) for detailed explanations of the mechanics.
 
-# How it Works
+## Audit
+Refer to [abdk_2023-05-15.pdf](/notes/abdk_2023-05-15.pdf) for the official audit report conducted by ABDK.
 
-## Setup
+## How it Works
+
+### Setup
 
 The auction is instantiated with the following parameters:
 - `bidAsset`: The asset which is being used to purchase
@@ -43,16 +48,16 @@ There's a trade-off with the granularity of the price.
  
 One recommendation is to keep `priceDenominator` as a power of 10 for simple UI integrations. 
 
-## Making bids and asks
+### Making bids and asks
 
 A user who wants to participate in the auction can call the `bid` or `ask` function. These functions take as arguments the number of tokens that the user wishes to use to make their order, and the price. The auction contract takes control of their input tokens, and mints an equivalent number of `receipt` tokens. `Receipt` tokens are represented as an ERC1155 token, with the tokenId representing both the price and whether the order was a bid or ask.
 
-## Settlement
+### Settlement
 
 After the auction's `endDate`, anyone can call the `settle()` function. During settlement the contract matches up bids and asks, determining which bids/asks have been "cleared", and the final `clearingPrice`. 
 
 
-## Redemption
+### Redemption
 
 After settlement, users who hold receipt tokens can redeem them with the auction to get their owed tokens. 
 
